@@ -12,7 +12,7 @@ $profile = [
     'rating' => 4.9,
     'jobs_completed' => 14,
     'hourly_rate' => 35,
-    'bio' => "I am a passionate software engineer specializing in high-performance web applications and system architecture. \n\nI prefer an intense, deep-focus work style and have extensive experience building scalable solutions using MongoDB, Express, React, Node.js, and Next.js. My environment of choice is Linux, and I ensure all my code is clean, documented, and adheres to strict design patterns.",
+    'bio' => "bla bla bla",
     'skills' => ['Node.js', 'React', 'MongoDB', 'Next.js', 'Linux', 'Tailwind CSS'],
     'joined' => 'Sept 2025'
 ];
@@ -98,29 +98,6 @@ $is_own_profile = (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $profi
                 <?php foreach ($profile['skills'] as $skill): ?>
                     <span class="skill-badge"><?= htmlspecialchars($skill) ?></span>
                 <?php endforeach; ?>
-            </div>
-        </div>
-
-        <!-- Work History Card -->
-        <div class="fh-card p-4 p-md-5">
-            <h5 class="fw-bold mb-4" style="color: #1a1a2e;">Recent Work History</h5>
-            
-            <div class="border-bottom pb-3 mb-3">
-                <h6 class="fw-bold mb-1" style="color: #1a1a2e;">Spotify Clone (Supabase Integration)</h6>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="text-warning small fw-bold"><i class="bi bi-star-fill"></i> 5.0 Rating</div>
-                    <div class="text-muted small">Oct 2025</div>
-                </div>
-                <p class="text-muted small mb-0">"Excellent architecture and incredibly fast delivery. The Next.js integration was flawless."</p>
-            </div>
-
-            <div>
-                <h6 class="fw-bold mb-1" style="color: #1a1a2e;">CornerStone E-commerce Platform</h6>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <div class="text-warning small fw-bold"><i class="bi bi-star-fill"></i> 4.8 Rating</div>
-                    <div class="text-muted small">Nov 2025</div>
-                </div>
-                <p class="text-muted small mb-0">"Great communication and clean Tailwind implementation. Highly recommended."</p>
             </div>
         </div>
 

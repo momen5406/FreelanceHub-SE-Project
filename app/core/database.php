@@ -45,6 +45,37 @@ class Database {
       return $this->connection->insert_id;
     }
   }
+  public function update($query)
+  {
+    $result = $this->connection->query($query);
+    if (!$result) {
+      echo "Error: " . mysqli_error($this->connection);
+      return false;
+    } else {
+      return $this->connection->affected_rows;
+    }
+  }
+
+  public function delete($query)
+  {
+    $result = $this->connection->query($query);
+    if (!$result) {
+      echo "Error: " . mysqli_error($this->connection);
+      return false;
+    } else {
+      return $this->connection->affected_rows;
+    }
+  }
+
+  public function escapeString($string)
+  {
+    return $this->connection->real_escape_string($string);
+  }
+
+  public function getLastError()
+  {
+    return $this->connection->error;
+  }
 
 }
 

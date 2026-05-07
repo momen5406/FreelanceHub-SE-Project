@@ -263,6 +263,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
 
                     <?php elseif ($_SESSION['role'] === 'Admin'): ?>
                     <li class="nav-item">
+                        <a class="btn btn-fh-admin" href="../../views/admin/dashboard.php">
+                            <i class="bi bi-shield-check me-1"></i>Admin Panel
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="btn btn-fh-admin" href="../../public/marketplace-health.php">
                             <i class="bi bi-graph-up me-1"></i>Marketplace Health
                         </a>

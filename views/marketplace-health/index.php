@@ -64,26 +64,6 @@ if (session_status() === PHP_SESSION_NONE) {
         text-align: left;
         border-bottom: 1px solid #dee2e6;
     }
-
-    .last-updated {
-        font-size: 12px;
-        color: #adb5bd;
-    }
-
-    .btn-refresh {
-        background: #e8a045;
-        color: #1a1a2e;
-        border: none;
-        padding: 5px 15px;
-        border-radius: 6px;
-        font-size: 13px;
-        margin-right: 10px;
-    }
-
-    .btn-refresh:hover {
-        background: #d4903a;
-        color: #1a1a2e;
-    }
     </style>
 </head>
 
@@ -93,15 +73,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
     <div class="container py-4">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="mb-3">
             <h3><i class="bi bi-graph-up me-2" style="color:#e8a045;"></i>Marketplace Health Dashboard</h3>
-            <div>
-                <button onclick="refreshData()" class="btn-refresh">
-                    <i class="bi bi-arrow-repeat"></i> Refresh Now
-                </button>
-                <span class="last-updated"><i class="bi bi-clock"></i> Last updated: <span
-                        id="timestamp"><?php echo date('Y-m-d H:i:s'); ?></span></span>
-            </div>
         </div>
 
         <div class="row">
@@ -246,34 +219,6 @@ if (session_status() === PHP_SESSION_NONE) {
         </div>
 
     </div>
-
-    <script>
-    function refreshData() {
-        fetch('../../public/index.php?route=api/marketplace-health/data')
-            .then(response => response.json())
-            .then(data => {
-                if (data.metrics) {
-                    document.getElementById('active-contracts').innerHTML = data.metrics.active_contracts || 0;
-                    document.getElementById('escrowed-value').innerHTML = (data.metrics.total_escrowed_value || 0)
-                        .toLocaleString();
-                    document.getElementById('dispute-rate').innerHTML = data.metrics.dispute_rate || 0;
-                    document.getElementById('completed-contracts').innerHTML = data.metrics.completed_contracts ||
-                        0;
-                    document.getElementById('total-freelancers').innerHTML = data.metrics.total_freelancers || 0;
-                    document.getElementById('total-clients').innerHTML = data.metrics.total_clients || 0;
-                    document.getElementById('avg-job-value').innerHTML = (data.metrics.average_job_value || 0)
-                        .toLocaleString();
-                    document.getElementById('platform-fees').innerHTML = (data.metrics.platform_fees_collected || 0)
-                        .toLocaleString();
-                    document.getElementById('timestamp').innerHTML = data.timestamp;
-                }
-            })
-            .catch(error => console.error('Error:', error));
-    }
-
-    refreshData();
-    setInterval(refreshData, 10000);
-    </script>
 
     <script src="../../public/assets/js/bootstrap.bundle.min.js"></script>
 </body>

@@ -261,54 +261,58 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
                         </a>
                     </li>
 
-                    <?php elseif ($_SESSION['role'] === 'Admin'): ?>
-                    <li class="nav-item">
+                    <<?php elseif ($_SESSION['role'] === 'Admin'): ?> <li class="nav-item">
                         <a class="btn btn-fh-admin" href="../../views/admin/dashboard.php">
                             <i class="bi bi-shield-check me-1"></i>Admin Panel
                         </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-fh-admin" href="../../public/marketplace-health.php">
-                            <i class="bi bi-graph-up me-1"></i>Marketplace Health
-                        </a>
-                    </li>
-                    <?php endif; ?>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-fh-admin" href="../../views/admin/manage-roles.php">
+                                <i class="bi bi-person-badge me-1"></i>Manage Roles
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="btn btn-fh-admin" href="../../public/marketplace-health.php">
+                                <i class="bi bi-graph-up me-1"></i>Marketplace Health
+                            </a>
+                        </li>
+                        <?php endif; ?>
 
-                    <li class="nav-item dropdown">
-                        <a class="btn-fh-profile dropdown-toggle" href="#" id="userDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="fh-avatar">
-                                <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
-                            </span>
-                            <?= htmlspecialchars($_SESSION['username'] ?? 'Profile') ?>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li>
-                                <h6 class="dropdown-header">
-                                    <?= htmlspecialchars($_SESSION['username'] ?? '') ?>
-                                    <br><small class="text-muted"><?= $_SESSION['role'] ?? '' ?></small>
-                                </h6>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="../../views/profile/view.php">
-                                    <i class="bi bi-gear"></i> Settings
-                                </a>
-                            </li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li>
-                                <form action="" method="POST">
-                                    <input type="hidden" name="logout" value="true">
-                                    <button class="dropdown-item text-danger" type="submit">
-                                        <i class="bi bi-box-arrow-right"></i> Log Out
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
+                        <li class="nav-item dropdown">
+                            <a class="btn-fh-profile dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="fh-avatar">
+                                    <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
+                                </span>
+                                <?= htmlspecialchars($_SESSION['username'] ?? 'Profile') ?>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <h6 class="dropdown-header">
+                                        <?= htmlspecialchars($_SESSION['username'] ?? '') ?>
+                                        <br><small class="text-muted"><?= $_SESSION['role'] ?? '' ?></small>
+                                    </h6>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="../../views/profile/view.php">
+                                        <i class="bi bi-gear"></i> Settings
+                                    </a>
+                                </li>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
+                                <li>
+                                    <form action="" method="POST">
+                                        <input type="hidden" name="logout" value="true">
+                                        <button class="dropdown-item text-danger" type="submit">
+                                            <i class="bi bi-box-arrow-right"></i> Log Out
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
 
-                    <?php endif; ?>
+                        <?php endif; ?>
                 </ul>
             </div>
         </div>

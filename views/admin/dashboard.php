@@ -2,9 +2,9 @@
 
 <?php
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Admin') {
-  echo "<div class='container mt-5'><div class='alert alert-danger'>Access Denied. Admin privileges required.</div></div>";
-  require_once '../../views/partials/footer.php';
-  exit();
+    echo "<div class='container mt-5'><div class='alert alert-danger'>Access Denied. Admin privileges required.</div></div>";
+    require_once '../../views/partials/footer.php';
+    exit();
 }
 
 $host = "localhost";
@@ -15,50 +15,82 @@ $database = "freelance_platform";
 $conn = new mysqli($host, $user, $password, $database);
 
 if ($conn->connect_error) {
-  die("Connection failed: " . $conn->connect_error);
+    die("Connection failed: " . $conn->connect_error);
 }
 
 if (isset($_GET['delete_id'])) {
-  $delete_id = (int)$_GET['delete_id'];
-  $deleteQuery = "DELETE FROM Users WHERE id = $delete_id";
-  if ($conn->query($deleteQuery)) {
-    echo "<script>alert('User deleted successfully!'); window.location.href='dashboard.php';</script>";
-  } else {
-    echo "<script>alert('Error deleting user!');</script>";
-  }
+    $delete_id = (int)$_GET['delete_id'];
+    $deleteQuery = "DELETE FROM Users WHERE id = $delete_id";
+    if ($conn->query($deleteQuery)) {
+        echo "<script>alert('User deleted successfully!'); window.location.href='dashboard.php';</script>";
+    } else {
+        echo "<script>alert('Error deleting user!');</script>";
+    }
 }
 
 $search = isset($_GET['search']) ? $conn->real_escape_string($_GET['search']) : '';
 $whereClause = '';
 if (!empty($search)) {
-  $whereClause = "WHERE name LIKE '%$search%' OR email LIKE '%$search%' OR role LIKE '%$search%'";
+    $whereClause = "WHERE name LIKE '%$search%' OR email LIKE '%$search%' OR role LIKE '%$search%'";
 }
 
 $recentUsers = [];
 $totalFreelancers = 0;
 $totalClients = 0;
+$totalFinancial = 0;
+$totalTechSupport = 0;
+$totalDisputeMediator = 0;
+$totalAdmins = 0;
 
 $usersQuery = "SELECT id, name, email, role, is_verified FROM Users $whereClause ORDER BY id DESC LIMIT 50";
 $usersResult = $conn->query($usersQuery);
 
 if ($usersResult && $usersResult->num_rows > 0) {
-  while ($row = $usersResult->fetch_assoc()) {
-    $recentUsers[] = $row;
-  }
+    while ($row = $usersResult->fetch_assoc()) {
+        $recentUsers[] = $row;
+    }
 }
 
 $freelancersQuery = "SELECT COUNT(*) as total FROM Users WHERE role = 'Freelancer'";
 $freelancersResult = $conn->query($freelancersQuery);
 if ($freelancersResult && $freelancersResult->num_rows > 0) {
-  $row = $freelancersResult->fetch_assoc();
-  $totalFreelancers = $row['total'];
+    $row = $freelancersResult->fetch_assoc();
+    $totalFreelancers = $row['total'];
 }
 
 $clientsQuery = "SELECT COUNT(*) as total FROM Users WHERE role = 'Client'";
 $clientsResult = $conn->query($clientsQuery);
 if ($clientsResult && $clientsResult->num_rows > 0) {
-  $row = $clientsResult->fetch_assoc();
-  $totalClients = $row['total'];
+    $row = $clientsResult->fetch_assoc();
+    $totalClients = $row['total'];
+}
+
+$financialQuery = "SELECT COUNT(*) as total FROM Users WHERE role = 'Financial'";
+$financialResult = $conn->query($financialQuery);
+if ($financialResult && $financialResult->num_rows > 0) {
+    $row = $financialResult->fetch_assoc();
+    $totalFinancial = $row['total'];
+}
+
+$techSupportQuery = "SELECT COUNT(*) as total FROM Users WHERE role = 'Tech Support'";
+$techSupportResult = $conn->query($techSupportQuery);
+if ($techSupportResult && $techSupportResult->num_rows > 0) {
+    $row = $techSupportResult->fetch_assoc();
+    $totalTechSupport = $row['total'];
+}
+
+$disputeMediatorQuery = "SELECT COUNT(*) as total FROM Users WHERE role = 'Dispute Mediator'";
+$disputeMediatorResult = $conn->query($disputeMediatorQuery);
+if ($disputeMediatorResult && $disputeMediatorResult->num_rows > 0) {
+    $row = $disputeMediatorResult->fetch_assoc();
+    $totalDisputeMediator = $row['total'];
+}
+
+$adminsQuery = "SELECT COUNT(*) as total FROM Users WHERE role = 'Admin'";
+$adminsResult = $conn->query($adminsQuery);
+if ($adminsResult && $adminsResult->num_rows > 0) {
+    $row = $adminsResult->fetch_assoc();
+    $totalAdmins = $row['total'];
 }
 
 $conn->close();
@@ -146,6 +178,30 @@ $conn->close();
     font-size: 12px;
 }
 
+.badge-role-financial {
+    background: rgba(243, 156, 18, 0.2);
+    color: #e67e22;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.badge-role-tech {
+    background: rgba(155, 89, 182, 0.15);
+    color: #8e44ad;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+.badge-role-mediator {
+    background: rgba(26, 188, 156, 0.15);
+    color: #16a085;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
 .search-box {
     padding: 8px 15px;
     border: 1px solid #e2dfd8;
@@ -208,6 +264,13 @@ $conn->close();
     background: #218838;
     color: white;
 }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
 </style>
 
 <nav aria-label="breadcrumb" class="mb-3 mt-2">
@@ -229,38 +292,59 @@ $conn->close();
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="admin-metric-card">
-            <div>
-                <div class="text-muted small mb-1">Total Freelancers</div>
-                <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalFreelancers; ?></div>
-            </div>
-            <div class="metric-icon icon-users">
-                <i class="bi bi-people"></i>
-            </div>
+<div class="stats-grid mb-4">
+    <div class="admin-metric-card">
+        <div>
+            <div class="text-muted small mb-1">Total Admins</div>
+            <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalAdmins; ?></div>
+        </div>
+        <div class="metric-icon icon-users">
+            <i class="bi bi-shield-lock"></i>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="admin-metric-card">
-            <div>
-                <div class="text-muted small mb-1">Total Clients</div>
-                <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalClients; ?></div>
-            </div>
-            <div class="metric-icon icon-users">
-                <i class="bi bi-building"></i>
-            </div>
+    <div class="admin-metric-card">
+        <div>
+            <div class="text-muted small mb-1">Total Freelancers</div>
+            <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalFreelancers; ?></div>
+        </div>
+        <div class="metric-icon icon-users">
+            <i class="bi bi-people"></i>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="admin-metric-card">
-            <div>
-                <div class="text-muted small mb-1">Total Users</div>
-                <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalFreelancers + $totalClients; ?></div>
-            </div>
-            <div class="metric-icon icon-users">
-                <i class="bi bi-person-badge"></i>
-            </div>
+    <div class="admin-metric-card">
+        <div>
+            <div class="text-muted small mb-1">Total Clients</div>
+            <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalClients; ?></div>
+        </div>
+        <div class="metric-icon icon-users">
+            <i class="bi bi-building"></i>
+        </div>
+    </div>
+    <div class="admin-metric-card">
+        <div>
+            <div class="text-muted small mb-1">Financial Team</div>
+            <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalFinancial; ?></div>
+        </div>
+        <div class="metric-icon icon-users">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+    </div>
+    <div class="admin-metric-card">
+        <div>
+            <div class="text-muted small mb-1">Tech Support</div>
+            <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalTechSupport; ?></div>
+        </div>
+        <div class="metric-icon icon-users">
+            <i class="bi bi-tools"></i>
+        </div>
+    </div>
+    <div class="admin-metric-card">
+        <div>
+            <div class="text-muted small mb-1">Dispute Mediators</div>
+            <div class="fs-2 fw-bold" style="color: #1a1a2e;"><?php echo $totalDisputeMediator; ?></div>
+        </div>
+        <div class="metric-icon icon-users">
+            <i class="bi bi-balance-scale"></i>
         </div>
     </div>
 </div>
@@ -307,20 +391,28 @@ $conn->close();
                             <td><?php echo htmlspecialchars($user['email']); ?></td>
                             <td>
                                 <?php
-                    if ($user['role'] == 'Client') {
-                      echo '<span class="badge-role-client">Client</span>';
-                    } elseif ($user['role'] == 'Freelancer') {
-                      echo '<span class="badge-role-freelancer">Freelancer</span>';
-                    } else {
-                      echo '<span class="badge-role-admin">Admin</span>';
-                    }
-                    ?>
+                                        if ($user['role'] == 'Client') {
+                                            echo '<span class="badge-role-client">👤 Client</span>';
+                                        } elseif ($user['role'] == 'Freelancer') {
+                                            echo '<span class="badge-role-freelancer">💼 Freelancer</span>';
+                                        } elseif ($user['role'] == 'Admin') {
+                                            echo '<span class="badge-role-admin">👑 Admin</span>';
+                                        } elseif ($user['role'] == 'Financial') {
+                                            echo '<span class="badge-role-financial">💰 Financial</span>';
+                                        } elseif ($user['role'] == 'Tech Support') {
+                                            echo '<span class="badge-role-tech">🔧 Tech Support</span>';
+                                        } elseif ($user['role'] == 'Dispute Mediator') {
+                                            echo '<span class="badge-role-mediator">⚖️ Dispute Mediator</span>';
+                                        } else {
+                                            echo '<span class="badge-role-client">' . htmlspecialchars($user['role']) . '</span>';
+                                        }
+                                        ?>
                             </td>
                             <td>
                                 <?php if ($user['is_verified'] == 1): ?>
-                                <span class="text-success">Verified</span>
+                                <span class="text-success">✓ Verified</span>
                                 <?php else: ?>
-                                <span class="text-danger">Not verified</span>
+                                <span class="text-danger">✗ Not verified</span>
                                 <?php endif; ?>
                             </td>
                             <td>

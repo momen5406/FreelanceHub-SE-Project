@@ -57,7 +57,12 @@ class MarketplaceHealth
         $result = $this->db->select($query);
         if ($result && count($result) > 0) {
             $disputed = $result[0]['disputed_jobs'] ?? 0;
-            $total = $result[0]['total_jobs'] ?? 1;
+            $total = $result[0]['total_jobs'] ?? 0;
+
+            if ($total == 0) {
+                return 0;
+            }
+
             return round(($disputed / $total) * 100, 2);
         }
         return 0;

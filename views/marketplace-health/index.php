@@ -64,6 +64,41 @@ if (session_status() === PHP_SESSION_NONE) {
         text-align: left;
         border-bottom: 1px solid #dee2e6;
     }
+
+    .btn-pdf {
+        background: #dc3545;
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-left: 10px;
+    }
+
+    .btn-pdf:hover {
+        background: #c82333;
+    }
+
+    .no-print {
+        print-color-adjust: exact;
+    }
+
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+
+        body {
+            padding: 20px;
+            background: white;
+        }
+
+        .stat-card,
+        .chart-card {
+            box-shadow: none;
+            border: 1px solid #ddd;
+        }
+    }
     </style>
 </head>
 
@@ -73,8 +108,11 @@ if (session_status() === PHP_SESSION_NONE) {
 
     <div class="container py-4">
 
-        <div class="mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <h3><i class="bi bi-graph-up me-2" style="color:#e8a045;"></i>Marketplace Health Dashboard</h3>
+            <button onclick="window.print()" class="btn-pdf no-print">
+                <i class="bi bi-file-pdf"></i> Export as PDF
+            </button>
         </div>
 
         <div class="row">
@@ -147,16 +185,20 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="chart-card">
                     <h5>Contracts by Status</h5>
                     <table>
-                        <tr>
-                            <th>Status</th>
-                            <th>Count</th>
-                        </tr>
-                        <?php foreach ($contractsByStatus as $status => $count): ?>
-                        <tr>
-                            <td><?php echo $status; ?></td>
-                            <td><?php echo $count; ?></td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($contractsByStatus as $status => $count): ?>
+                            <tr>
+                                <td><?php echo $status; ?></td>
+                                <td><?php echo $count; ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -164,18 +206,22 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="chart-card">
                     <h5>Escrow Statistics</h5>
                     <table>
-                        <tr>
-                            <th>Status</th>
-                            <th>Count</th>
-                            <th>Amount</th>
-                        </tr>
-                        <?php foreach ($escrowStats as $status => $data): ?>
-                        <tr>
-                            <td><?php echo $status; ?></td>
-                            <td><?php echo $data['count']; ?></td>
-                            <td>$<?php echo number_format($data['total_amount'], 2); ?></td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Count</th>
+                                <th>Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($escrowStats as $status => $data): ?>
+                            <tr>
+                                <td><?php echo $status; ?></td>
+                                <td><?php echo $data['count']; ?></td>
+                                <td>$<?php echo number_format($data['total_amount'], 2); ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -186,16 +232,20 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="chart-card">
                     <h5>Dispute Status</h5>
                     <table>
-                        <tr>
-                            <th>Status</th>
-                            <th>Count</th>
-                        </tr>
-                        <?php foreach ($disputesByResolution as $status => $count): ?>
-                        <tr>
-                            <td><?php echo $status; ?></td>
-                            <td><?php echo $count; ?></td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($disputesByResolution as $status => $count): ?>
+                            <tr>
+                                <td><?php echo $status; ?></td>
+                                <td><?php echo $count; ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -203,16 +253,20 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="chart-card">
                     <h5>Weekly Job Trends</h5>
                     <table>
-                        <tr>
-                            <th>Date</th>
-                            <th>New Jobs</th>
-                        </tr>
-                        <?php foreach ($weeklyTrends as $trend): ?>
-                        <tr>
-                            <td><?php echo $trend['date']; ?></td>
-                            <td><?php echo $trend['new_jobs']; ?></td>
-                        </tr>
-                        <?php endforeach; ?>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>New Jobs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($weeklyTrends as $trend): ?>
+                            <tr>
+                                <td><?php echo $trend['date']; ?></td>
+                                <td><?php echo $trend['new_jobs']; ?></td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -221,6 +275,29 @@ if (session_status() === PHP_SESSION_NONE) {
     </div>
 
     <script src="../../public/assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function refreshData() {
+        fetch('../../public/index.php?route=api/marketplace-health/data')
+            .then(response => response.json())
+            .then(data => {
+                if (data.metrics) {
+                    document.getElementById('active-contracts').innerText = data.metrics.active_contracts || 0;
+                    document.getElementById('escrowed-value').innerText = (data.metrics.total_escrowed_value || 0)
+                        .toLocaleString();
+                    document.getElementById('dispute-rate').innerText = data.metrics.dispute_rate || 0;
+                    document.getElementById('completed-contracts').innerText = data.metrics.completed_contracts ||
+                        0;
+                    document.getElementById('total-freelancers').innerText = data.metrics.total_freelancers || 0;
+                    document.getElementById('total-clients').innerText = data.metrics.total_clients || 0;
+                    document.getElementById('avg-job-value').innerText = (data.metrics.average_job_value || 0)
+                        .toLocaleString();
+                    document.getElementById('platform-fees').innerText = (data.metrics.platform_fees_collected || 0)
+                        .toLocaleString();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+    </script>
 </body>
 
 </html>

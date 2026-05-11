@@ -23,12 +23,12 @@ class User
       'id' => $user['id'],
       'name' => $user['name'],
       'role' => $user['role'],
-      'location' => $user['country_code'],
-      'rating' => $user['reputation_score'],
-      'joined' => $user['created_at'],
-      'headline' => $user['headline'],
-      'hourly_rate' => $user['hourly_rate'],
-      'bio' => $user['bio']
+      'location' => $user['country_code'] ?? '',
+      'rating' => $user['reputation_score'] ?? 0,
+      'joined' => $user['created_at'] ?? '',
+      'headline' => $user['headline'] ?? '',
+      'hourly_rate' => $user['hourly_rate'] ?? '',
+      'bio' => $user['bio'] ?? ''
     ];
     return $profile;
   }

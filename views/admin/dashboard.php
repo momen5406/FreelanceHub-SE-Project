@@ -18,6 +18,59 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+$message = '';
+$error = '';
+$allowedRoles = [
+    'Admin' => 1,
+    'Financial' => 2,
+    'Dispute Mediator' => 3,
+    'Tech Support' => 4,
+    'Client' => 5,
+    'Freelancer' => 6
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_account'])) {
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $role = $_POST['role'] ?? 'Client';
+
+    if ($name === '' || $email === '' || $password === '') {
+        $error = 'Please fill in name, email, and password.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Please enter a valid email address.';
+    } elseif (strlen($password) < 6) {
+        $error = 'Password must be at least 6 characters.';
+    } elseif (!array_key_exists($role, $allowedRoles)) {
+        $error = 'Invalid role selected.';
+    } else {
+        $safeEmail = $conn->real_escape_string($email);
+        $existingUser = $conn->query("SELECT id FROM Users WHERE email = '$safeEmail' LIMIT 1");
+
+        if ($existingUser && $existingUser->num_rows > 0) {
+            $error = 'An account with this email already exists.';
+        } else {
+            $safeName = $conn->real_escape_string($name);
+            $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+            $safePassword = $conn->real_escape_string($hashedPassword);
+            $safeRole = $conn->real_escape_string($role);
+            $roleId = $allowedRoles[$role];
+
+            $insertQuery = "
+                INSERT INTO Users (name, email, password, role, is_verified, role_id, created_at)
+                VALUES ('$safeName', '$safeEmail', '$safePassword', '$safeRole', 1, $roleId, NOW())
+            ";
+
+            if ($conn->query($insertQuery)) {
+                $message = 'Account created successfully.';
+                $_POST = [];
+            } else {
+                $error = 'Error creating account: ' . $conn->error;
+            }
+        }
+    }
+}
+
 if (isset($_GET['delete_id'])) {
     $delete_id = (int)$_GET['delete_id'];
     $deleteQuery = "DELETE FROM Users WHERE id = $delete_id";
@@ -271,6 +324,48 @@ $conn->close();
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
+
+.create-account-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+}
+
+.form-control-fh,
+.form-select-fh {
+    width: 100%;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #e2dfd8;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.form-control-fh:focus,
+.form-select-fh:focus {
+    border-color: #e8a045;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(232, 160, 69, 0.15);
+}
+
+.form-label-fh {
+    color: #1a1a2e;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.btn-create-account {
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    padding: 0.65rem 1rem;
+}
+
+.btn-create-account:hover {
+    background: #219a52;
+}
 </style>
 
 <nav aria-label="breadcrumb" class="mb-3 mt-2">
@@ -347,6 +442,59 @@ $conn->close();
             <i class="bi bi-balance-scale"></i>
         </div>
     </div>
+</div>
+
+<?php if ($message): ?>
+<div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
+<?php endif; ?>
+
+<?php if ($error): ?>
+<div class="alert alert-danger"><?php echo htmlspecialchars($error); ?></div>
+<?php endif; ?>
+
+<div class="fh-card p-4 mb-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1" style="color: #1a1a2e;">Add Account</h5>
+            <p class="text-muted mb-0 small">Create a verified platform account and save it to the database.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="">
+        <div class="create-account-grid">
+            <div>
+                <label class="form-label-fh">Name</label>
+                <input type="text" name="name" class="form-control-fh" required
+                    value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>">
+            </div>
+            <div>
+                <label class="form-label-fh">Email</label>
+                <input type="email" name="email" class="form-control-fh" required
+                    value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
+            </div>
+            <div>
+                <label class="form-label-fh">Password</label>
+                <input type="password" name="password" class="form-control-fh" required minlength="6">
+            </div>
+            <div>
+                <label class="form-label-fh">Role</label>
+                <select name="role" class="form-select-fh" required>
+                    <?php foreach ($allowedRoles as $roleName => $roleId): ?>
+                    <option value="<?php echo htmlspecialchars($roleName); ?>"
+                        <?php echo (($_POST['role'] ?? 'Client') === $roleName) ? 'selected' : ''; ?>>
+                        <?php echo htmlspecialchars($roleName); ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+
+        <div class="mt-3">
+            <button type="submit" name="create_account" class="btn-create-account">
+                <i class="bi bi-person-plus me-1"></i> Create Account
+            </button>
+        </div>
+    </form>
 </div>
 
 <div class="row g-4 mb-5">

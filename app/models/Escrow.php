@@ -35,6 +35,9 @@ class Escrow
 
     public function releaseFunds($milestoneId, $freelancerId)
     {
+        $milestoneId = (int) $milestoneId;
+        $freelancerId = (int) $freelancerId;
+
         $this->db->openConnection();
 
         $escrow = $this->db->select("
@@ -47,12 +50,40 @@ class Escrow
             return ['success' => false, 'error' => 'No locked funds found'];
         }
 
-        $this->db->update("UPDATE users SET wallet_balance = wallet_balance + {$escrow[0]['amount']} WHERE id = $freelancerId");
+        $grossAmount = (float) $escrow[0]['amount'];
+        $freelancer = $this->db->select("SELECT total_earned FROM users WHERE id = $freelancerId");
+        $lifetimeValue = (float) ($freelancer[0]['total_earned'] ?? 0);
+
+        $feeTier = $this->db->select("
+            SELECT fee_percentage
+            FROM fee_tiers
+            WHERE $lifetimeValue >= min_lifetime_value
+              AND $lifetimeValue < max_lifetime_value
+            ORDER BY min_lifetime_value DESC
+            LIMIT 1
+        ");
+
+        $feePercentage = (float) ($feeTier[0]['fee_percentage'] ?? 10);
+        $platformFee = round($grossAmount * ($feePercentage / 100), 2);
+        $netAmount = round($grossAmount - $platformFee, 2);
+
+        $this->db->update("
+            UPDATE users
+            SET wallet_balance = wallet_balance + $netAmount,
+                total_earned = total_earned + $netAmount
+            WHERE id = $freelancerId
+        ");
         $this->db->update("UPDATE escrow_transactions SET status = 'Released', released_at = NOW() WHERE id = {$escrow[0]['id']}");
 
         $this->db->closeConnection();
 
-        return ['success' => true, 'amount' => $escrow[0]['amount']];
+        return [
+            'success' => true,
+            'amount' => $netAmount,
+            'gross_amount' => $grossAmount,
+            'platform_fee' => $platformFee,
+            'fee_percentage' => $feePercentage
+        ];
     }
 
     public function isFundsLocked($milestoneId)

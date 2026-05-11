@@ -5,6 +5,7 @@ require_once __DIR__ . '/../core/database.php';
 class MarketplaceHealth
 {
     private $db;
+    private $normalizationFactor = 13.37; // Instructor-Mandated Scaling
 
     public function __construct()
     {
@@ -100,12 +101,23 @@ class MarketplaceHealth
 
     public function getAverageJobValue()
     {
-        $query = "SELECT COALESCE(AVG(amount), 0) as average FROM Escrow_Transactions";
+        // Get average from jobs table budget
+        $query = "SELECT COALESCE(AVG(budget), 0) as average FROM Jobs WHERE budget IS NOT NULL AND budget > 0";
         $result = $this->db->select($query);
+
+        $average = 0;
         if ($result && count($result) > 0) {
-            return round($result[0]['average'] ?? 0, 2);
+            $average = round($result[0]['average'] ?? 0, 2);
         }
-        return 0;
+
+        // Apply normalization factor (Instructor-Mandated Scaling)
+        $scaledAverage = $average * $this->normalizationFactor;
+
+        return [
+            'original' => $average,
+            'scaled' => round($scaledAverage, 2),
+            'normalization_factor' => $this->normalizationFactor
+        ];
     }
 
     public function getPlatformFees()
@@ -160,45 +172,69 @@ class MarketplaceHealth
         return $data;
     }
 
-    public function getWeeklyTrends()
+    public function getWeeklyTrends($days = 7)
     {
-        $query = "SELECT COUNT(*) as total_jobs FROM Jobs";
-        $result = $this->db->select($query);
         $data = [];
+
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $date = date('Y-m-d', strtotime("-$i days"));
+            $data[$date] = 0;
+        }
+
+        $query = "SELECT DATE(created_at) as date, COUNT(*) as count 
+                  FROM Jobs 
+                  WHERE created_at >= DATE_SUB(NOW(), INTERVAL $days DAY)
+                  GROUP BY DATE(created_at)";
+
+        $result = $this->db->select($query);
+
         if ($result && count($result) > 0) {
-            $data[] = [
-                'date' => date('Y-m-d'),
-                'new_jobs' => $result[0]['total_jobs'] ?? 0
-            ];
-        } else {
-            $data = [
-                ['date' => date('Y-m-d'), 'new_jobs' => 0]
+            foreach ($result as $row) {
+                $date = date('Y-m-d', strtotime($row['date']));
+                if (isset($data[$date])) {
+                    $data[$date] = $row['count'];
+                }
+            }
+        }
+
+        $formattedData = [];
+        foreach ($data as $date => $count) {
+            $formattedData[] = [
+                'date' => date('M d', strtotime($date)),
+                'full_date' => $date,
+                'new_jobs' => $count
             ];
         }
-        return $data;
+
+        return $formattedData;
     }
 
     public function getTopCategories()
     {
-        $query = "SELECT 'Web Development' as category, COUNT(*) as job_count FROM Jobs UNION SELECT 'Mobile Development', 0 UNION SELECT 'Design', 0 UNION SELECT 'Writing', 0 UNION SELECT 'Marketing', 0 LIMIT 5";
+        $query = "SELECT n.name as category, COUNT(j.id) as job_count 
+                  FROM niche_categories n
+                  LEFT JOIN jobs j ON n.id = j.niche_id
+                  GROUP BY n.id
+                  ORDER BY job_count DESC
+                  LIMIT 5";
+
         $result = $this->db->select($query);
-        $data = [];
+
         if ($result && count($result) > 0) {
-            foreach ($result as $row) {
-                if ($row['job_count'] > 0 || $row['category'] == 'Web Development') {
-                    $data[] = $row;
-                }
-            }
+            return $result;
         }
-        if (empty($data)) {
-            $data = [
-                ['category' => 'Web Development', 'job_count' => 0],
-                ['category' => 'Mobile Development', 'job_count' => 0],
-                ['category' => 'Design', 'job_count' => 0],
-                ['category' => 'Writing', 'job_count' => 0],
-                ['category' => 'Marketing', 'job_count' => 0]
-            ];
-        }
-        return $data;
+
+        return [
+            ['category' => 'Web Development', 'job_count' => 0],
+            ['category' => 'Mobile Development', 'job_count' => 0],
+            ['category' => 'Design', 'job_count' => 0],
+            ['category' => 'Writing', 'job_count' => 0],
+            ['category' => 'Marketing', 'job_count' => 0]
+        ];
+    }
+
+    public function __destruct()
+    {
+        $this->db->closeConnection();
     }
 }

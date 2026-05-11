@@ -3,6 +3,25 @@
 require_once "../../app/controllers/AuthController.php";
 require_once "../../app/models/User.php";
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+if (isset($_SESSION["user_id"])) {
+  if ($_SESSION['role'] === 'Client') {
+    header("Location: ../../views/jobs/my-postings.php");
+    exit();
+  } elseif ($_SESSION['role'] === 'Freelancer') {
+    header("Location: ../../views/jobs/index.php");
+    exit();
+  } elseif ($_SESSION['role'] === 'Admin') {
+    header("Location: ../../views/admin/dashboard.php");
+    exit();
+  } else {
+    header("Location: ../../views/home/index.php");
+    exit();
+  }
+}
+
 if (isset($_SESSION["userId"])) {
   session_start();
 }

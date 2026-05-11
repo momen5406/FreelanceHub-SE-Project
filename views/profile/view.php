@@ -1,23 +1,37 @@
 <?php require_once '../../views/partials/header.php'; ?>
 
 <?php
-// --- DUMMY DATA FOR UI TESTING ---
-// Member 2 will pull this based on $_GET['id']
-$profile = [
-    'id' => 101,
-    'name' => 'Mo\'men Hussein',
-    'role' => 'Freelancer',
-    'headline' => 'Full-Stack MERN Developer',
-    'location' => 'Cairo, Egypt',
-    'rating' => 4.9,
-    'jobs_completed' => 14,
-    'hourly_rate' => 35,
-    'bio' => "bla bla bla",
-    'skills' => ['Node.js', 'React', 'MongoDB', 'Next.js', 'Linux', 'Tailwind CSS'],
-    'joined' => 'Sept 2025'
-];
 
-// Determine if the person viewing this page is looking at their own profile
+require_once "../../app/models/User.php";
+require_once "../../app/core/database.php";
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$profile = [];
+
+if (!isset($_SESSION["user_id"])) {
+    header("Location: ../../views/auth/login.php");
+    exit();
+} else {
+    $userId = $_SESSION["user_id"];
+    $db = new Database;
+    if ($db->openConnection()) {
+        $query = "SELECT * FROM users WHERE id='$userId'";
+        $result = $db->select($query);
+        if ($result === false || count($result) == 0) {
+            echo "None";
+            exit();
+        } else {
+            $user = new User;
+            $profile = $user->getUserProfile($result[0]);
+        }
+    }
+}
+
+
+
 $is_own_profile = (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $profile['id']);
 ?>
 
@@ -58,7 +72,7 @@ $is_own_profile = (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $profi
 
                 <div class="d-grid gap-2">
                     <?php if ($is_own_profile): ?>
-                        <a href="/profile/edit" class="btn btn-fh-outline"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a>
+                        <a href="../../views/profile/edit.php" class="btn btn-fh-outline"><i class="bi bi-pencil-square me-2"></i>Edit Profile</a>
                     <?php elseif (isset($_SESSION['role']) && $_SESSION['role'] === 'Client'): ?>
                         <button class="btn btn-fh-primary"><i class="bi bi-envelope me-2"></i>Hire & Message</button>
                     <?php else: ?>
@@ -72,35 +86,17 @@ $is_own_profile = (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $profi
                     <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.7rem;">Hourly Rate</small>
                     <strong style="color: #1a1a2e;">$<?= $profile['hourly_rate'] ?>/hr</strong>
                 </div>
-                <div class="text-end">
-                    <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.7rem;">Jobs Completed</small>
-                    <strong style="color: #1a1a2e;"><?= $profile['jobs_completed'] ?></strong>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- RIGHT MAIN CONTENT: Details -->
     <div class="col-lg-8">
-        
-        <!-- Bio Card -->
         <div class="fh-card p-4 p-md-5 mb-4">
             <h5 class="fw-bold mb-4" style="color: #1a1a2e;">About <?= explode(' ', $profile['name'])[0] ?></h5>
             <div class="text-muted lh-lg" style="font-size: 1.05rem;">
                 <?= nl2br(htmlspecialchars($profile['bio'])) ?>
             </div>
         </div>
-
-        <!-- Skills Card -->
-        <div class="fh-card p-4 p-md-5 mb-4">
-            <h5 class="fw-bold mb-4" style="color: #1a1a2e;">Core Skills</h5>
-            <div class="d-flex flex-wrap gap-2">
-                <?php foreach ($profile['skills'] as $skill): ?>
-                    <span class="skill-badge"><?= htmlspecialchars($skill) ?></span>
-                <?php endforeach; ?>
-            </div>
-        </div>
-
     </div>
 </div>
 

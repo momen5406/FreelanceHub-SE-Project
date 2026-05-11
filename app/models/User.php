@@ -4,11 +4,33 @@ require_once __DIR__ . '/../core/database.php';
 class User
 {
   private $db;
+  public $name;
+  public $email;
+  public $password;
+  public $role;
+  public $headline;
+  public $bio;
+  public $hourly_rate;
 
   public function __construct()
   {
     $this->db = new Database();
     $this->db->openConnection();
+  }
+
+  public function getUserProfile($user) {
+    $profile = [
+      'id' => $user['id'],
+      'name' => $user['name'],
+      'role' => $user['role'],
+      'location' => $user['country_code'],
+      'rating' => $user['reputation_score'],
+      'joined' => $user['created_at'],
+      'headline' => $user['headline'],
+      'hourly_rate' => $user['hourly_rate'],
+      'bio' => $user['bio']
+    ];
+    return $profile;
   }
 
   public function getAllUsers($limit = 10)

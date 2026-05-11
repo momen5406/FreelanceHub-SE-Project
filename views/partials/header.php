@@ -5,7 +5,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
-    require_once "../../app/controllers/AuthController.php";
+    require_once __DIR__ . "/../../app/controllers/AuthController.php";
     $auth = new AuthController();
     $auth->logout();
 }

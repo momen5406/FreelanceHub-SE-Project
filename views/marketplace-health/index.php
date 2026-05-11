@@ -34,8 +34,9 @@ if (session_status() === PHP_SESSION_NONE) {
 
     .stat-title {
         color: #6c757d;
-        font-size: 13px;
+        font-size: 12px;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .chart-card {
@@ -63,6 +64,11 @@ if (session_status() === PHP_SESSION_NONE) {
         padding: 10px;
         text-align: left;
         border-bottom: 1px solid #dee2e6;
+    }
+
+    th {
+        background-color: #f8f9fa;
+        font-weight: 600;
     }
 
     .btn-pdf {
@@ -120,29 +126,40 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="stat-card">
                     <div class="stat-title">Active Contracts</div>
                     <div class="stat-value" id="active-contracts">
-                        <?php echo number_format($metrics['active_contracts'] ?? 0); ?></div>
+                        <?php echo number_format($metrics['active_contracts'] ?? 0); ?>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-title">Escrowed Value</div>
-                    <div class="stat-value">$<span
-                            id="escrowed-value"><?php echo number_format($metrics['total_escrowed_value'] ?? 0, 2); ?></span>
-                    </div>
+                    <div class="stat-value">$<span id="escrowed-value">
+                            <?php
+                            $escrowed = $metrics['total_escrowed_value'] ?? 0;
+                            if (is_array($escrowed)) $escrowed = $escrowed['total'] ?? 0;
+                            echo number_format($escrowed, 2);
+                            ?>
+                        </span></div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-title">Dispute Rate</div>
-                    <div class="stat-value"><span id="dispute-rate"><?php echo $metrics['dispute_rate'] ?? 0; ?></span>%
-                    </div>
+                    <div class="stat-value"><span id="dispute-rate">
+                            <?php
+                            $disputeRate = $metrics['dispute_rate'] ?? 0;
+                            if (is_array($disputeRate)) $disputeRate = $disputeRate['rate'] ?? 0;
+                            echo $disputeRate;
+                            ?>
+                        </span>%</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-title">Completed Contracts</div>
                     <div class="stat-value" id="completed-contracts">
-                        <?php echo number_format($metrics['completed_contracts'] ?? 0); ?></div>
+                        <?php echo number_format($metrics['completed_contracts'] ?? 0); ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -152,30 +169,42 @@ if (session_status() === PHP_SESSION_NONE) {
                 <div class="stat-card">
                     <div class="stat-title">Total Freelancers</div>
                     <div class="stat-value" id="total-freelancers">
-                        <?php echo number_format($metrics['total_freelancers'] ?? 0); ?></div>
+                        <?php echo number_format($metrics['total_freelancers'] ?? 0); ?>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-title">Total Clients</div>
                     <div class="stat-value" id="total-clients">
-                        <?php echo number_format($metrics['total_clients'] ?? 0); ?></div>
+                        <?php echo number_format($metrics['total_clients'] ?? 0); ?>
+                    </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-title">Average Job Value</div>
-                    <div class="stat-value">$<span
-                            id="avg-job-value"><?php echo number_format($metrics['average_job_value'] ?? 0, 2); ?></span>
-                    </div>
+                    <div class="stat-value">$<span id="avg-job-value">
+                            <?php
+                            $avgValue = $metrics['average_job_value'] ?? 0;
+                            if (is_array($avgValue)) {
+                                $avgValue = $avgValue['original'] ?? 0;
+                            }
+                            echo number_format($avgValue, 2);
+                            ?>
+                        </span></div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="stat-card">
                     <div class="stat-title">Platform Fees</div>
-                    <div class="stat-value">$<span
-                            id="platform-fees"><?php echo number_format($metrics['platform_fees_collected'] ?? 0, 2); ?></span>
-                    </div>
+                    <div class="stat-value">$<span id="platform-fees">
+                            <?php
+                            $fees = $metrics['platform_fees_collected'] ?? 0;
+                            if (is_array($fees)) $fees = $fees['total'] ?? 0;
+                            echo number_format($fees, 2);
+                            ?>
+                        </span></div>
                 </div>
             </div>
         </div>
@@ -184,45 +213,57 @@ if (session_status() === PHP_SESSION_NONE) {
             <div class="col-md-6">
                 <div class="chart-card">
                     <h5>Contracts by Status</h5>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Count</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($contractsByStatus as $status => $count): ?>
-                            <tr>
-                                <td><?php echo $status; ?></td>
-                                <td><?php echo $count; ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <?php if (!empty($contractsByStatus)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($contractsByStatus as $status => $count): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($status); ?></td>
+                                    <td><?php echo number_format($count); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <p class="text-muted">No data available</p>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="chart-card">
                     <h5>Escrow Statistics</h5>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Count</th>
-                                <th>Amount</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($escrowStats as $status => $data): ?>
-                            <tr>
-                                <td><?php echo $status; ?></td>
-                                <td><?php echo $data['count']; ?></td>
-                                <td>$<?php echo number_format($data['total_amount'], 2); ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <?php if (!empty($escrowStats)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($escrowStats as $status => $data): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($status); ?></td>
+                                    <td><?php echo number_format($data['count'] ?? 0); ?></td>
+                                    <td>$<?php echo number_format($data['total_amount'] ?? 0, 2); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <p class="text-muted">No data available</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -231,43 +272,56 @@ if (session_status() === PHP_SESSION_NONE) {
             <div class="col-md-6">
                 <div class="chart-card">
                     <h5>Dispute Status</h5>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Count</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($disputesByResolution as $status => $count): ?>
-                            <tr>
-                                <td><?php echo $status; ?></td>
-                                <td><?php echo $count; ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <?php if (!empty($disputesByResolution)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($disputesByResolution as $status => $count): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($status); ?></td>
+                                    <td><?php echo number_format($count); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <p class="text-muted">No disputes found</p>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="chart-card">
-                    <h5>Weekly Job Trends</h5>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>New Jobs</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($weeklyTrends as $trend): ?>
-                            <tr>
-                                <td><?php echo $trend['date']; ?></td>
-                                <td><?php echo $trend['new_jobs']; ?></td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                    <h5>Weekly Job Trends (Last 7 Days)</h5>
+                    <?php if (!empty($weeklyTrends)): ?>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>New Jobs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($weeklyTrends as $trend): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($trend['date'] ?? $trend['full_date'] ?? '-'); ?>
+                                    </td>
+                                    <td><?php echo number_format($trend['new_jobs'] ?? 0); ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                    <?php else: ?>
+                    <p class="text-muted">No data available</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -282,21 +336,34 @@ if (session_status() === PHP_SESSION_NONE) {
             .then(data => {
                 if (data.metrics) {
                     document.getElementById('active-contracts').innerText = data.metrics.active_contracts || 0;
-                    document.getElementById('escrowed-value').innerText = (data.metrics.total_escrowed_value || 0)
-                        .toLocaleString();
-                    document.getElementById('dispute-rate').innerText = data.metrics.dispute_rate || 0;
+
+                    let escrowed = data.metrics.total_escrowed_value || 0;
+                    if (typeof escrowed === 'object') escrowed = escrowed.total || 0;
+                    document.getElementById('escrowed-value').innerText = escrowed.toLocaleString();
+
+                    let disputeRate = data.metrics.dispute_rate || 0;
+                    if (typeof disputeRate === 'object') disputeRate = disputeRate.rate || 0;
+                    document.getElementById('dispute-rate').innerText = disputeRate;
+
                     document.getElementById('completed-contracts').innerText = data.metrics.completed_contracts ||
-                        0;
+                    0;
                     document.getElementById('total-freelancers').innerText = data.metrics.total_freelancers || 0;
                     document.getElementById('total-clients').innerText = data.metrics.total_clients || 0;
-                    document.getElementById('avg-job-value').innerText = (data.metrics.average_job_value || 0)
-                        .toLocaleString();
-                    document.getElementById('platform-fees').innerText = (data.metrics.platform_fees_collected || 0)
-                        .toLocaleString();
+
+                    let avgValue = data.metrics.average_job_value || 0;
+                    if (typeof avgValue === 'object') avgValue = avgValue.original || 0;
+                    document.getElementById('avg-job-value').innerText = avgValue.toLocaleString();
+
+                    let fees = data.metrics.platform_fees_collected || 0;
+                    if (typeof fees === 'object') fees = fees.total || 0;
+                    document.getElementById('platform-fees').innerText = fees.toLocaleString();
                 }
             })
             .catch(error => console.error('Error:', error));
     }
+
+    // Auto refresh every 30 seconds
+    setInterval(refreshData, 30000);
     </script>
 </body>
 

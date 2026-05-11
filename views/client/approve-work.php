@@ -49,7 +49,7 @@ if ($allCompleted && !empty($allMilestones)) {
 $db->closeConnection();
 
 if ($releaseResult['success']) {
-    $_SESSION['success'] = "Work approved! $" . number_format($releaseResult['amount'], 2) . " released to freelancer.";
+    $_SESSION['success'] = "Work approved! $" . number_format($releaseResult['amount'], 2) . " released to freelancer after $" . number_format($releaseResult['platform_fee'], 2) . " platform fee.";
 } else {
     $_SESSION['error'] = $releaseResult['error'];
 }

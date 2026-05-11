@@ -1,114 +1,319 @@
-<?php require_once '../../views/partials/header.php'; ?>
+<?php
+session_start();
+
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'Client') {
+  header('Location: ../auth/login.php');
+  exit();
+}
+
+require_once __DIR__ . '/../partials/header.php';
+?>
 
 <style>
-  .fh-card {
-    border: none;
-    border-radius: 12px;
-    box-shadow: 0 8px 30px rgba(26, 26, 46, 0.06);
-    overflow: hidden;
-    background: #fff;
-  }
-
-  .fh-card-header {
+.hero-section {
     background-color: #1a1a2e;
-    padding: 1.5rem;
-    text-align: center;
-    border-bottom: 3px solid #e8a045;
-  }
-
-  .fh-card-title {
     color: #fff;
+    padding: 3rem 0 4rem;
+    position: relative;
+    overflow: hidden;
+    border-bottom: 4px solid #e8a045;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(circle at 20% 50%, rgba(232, 160, 69, 0.08) 0%, transparent 50%);
+    z-index: 0;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-title {
     font-weight: 800;
-    margin: 0;
-    font-size: 1.4rem;
-    letter-spacing: -0.5px;
-  }
+    font-size: 2.5rem;
+    letter-spacing: -1.5px;
+}
 
-  .form-control-fh {
-    border-radius: 8px;
-    padding: 0.65rem 1rem;
+.hero-title span {
+    color: #e8a045;
+}
+
+.form-card {
+    background: #fff;
     border: 1.5px solid #e2dfd8;
-    background-color: #faf9f6;
-    transition: all 0.2s;
-  }
+    border-radius: 12px;
+    padding: 2rem;
+    margin-top: 2rem;
+    margin-bottom: 3rem;
+    box-shadow: 0 10px 30px rgba(26, 26, 46, 0.05);
+}
 
-  .form-control-fh:focus {
-    border-color: #e8a045;
-    box-shadow: 0 0 0 0.25rem rgba(232, 160, 69, 0.25);
-    background-color: #fff;
-  }
-
-  .form-label {
+.form-label {
     font-weight: 600;
     color: #1a1a2e;
-    font-size: 0.9rem;
-  }
+    margin-bottom: 0.5rem;
+}
 
-  .btn-fh-primary {
+.form-control,
+.form-select {
+    border: 1.5px solid #e2dfd8;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #e8a045;
+    box-shadow: 0 0 0 0.2rem rgba(232, 160, 69, 0.25);
+}
+
+.niche-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.niche-card {
+    background: #fff;
+    border: 2px solid #e2dfd8;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.niche-card:hover {
+    border-color: #e8a045;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(232, 160, 69, 0.1);
+}
+
+.niche-card.selected {
+    border-color: #e8a045;
+    background: rgba(232, 160, 69, 0.05);
+}
+
+.niche-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.niche-name {
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.btn-primary-custom {
     background: #e8a045;
     color: #1a1a2e;
     border: none;
     border-radius: 8px;
     font-weight: 700;
-    padding: 0.65rem;
-    transition: all 0.2s;
-  }
+    padding: 0.75rem 2rem;
+}
 
-  .btn-fh-primary:hover {
+.btn-primary-custom:hover {
     background: #d4903a;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+}
+
+.btn-outline-custom {
+    border: 2px solid #e2dfd8;
+    color: #6c757d;
+    background: transparent;
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+}
+
+.btn-outline-custom:hover {
+    border-color: #e8a045;
+    color: #e8a045;
+}
+
+.step-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+.step-item {
+    text-align: center;
+    flex: 1;
+}
+
+.step-circle {
+    width: 40px;
+    height: 40px;
+    background: #e2dfd8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.step-circle.active {
+    background: #e8a045;
     color: #1a1a2e;
-  }
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.step-label.active {
+    color: #e8a045;
+    font-weight: bold;
+}
+
+.text-danger {
+    color: #e74c3c !important;
+}
 </style>
 
-<div class="row justify-content-center mt-3 mb-5">
-  <div class="col-md-8 col-lg-7">
-
-    <div class="mb-4 text-center">
-      <h3 style="color: #1a1a2e; font-weight: 800; letter-spacing: -0.5px;">Post a New Project</h3>
-      <p class="text-muted">Fill out the details below to attract top freelance talent.</p>
-    </div>
-
-    <div class="card fh-card">
-      <div class="card-body p-4 p-md-5">
-
-        <form action="/jobs/create" method="POST">
-
-          <div class="mb-4">
-            <label for="title" class="form-label">Project Title</label>
-            <input type="text" class="form-control form-control-fh" id="title" name="title" required placeholder="e.g. Build a Responsive Portfolio Website">
-          </div>
-
-          <div class="mb-4">
-            <label for="category" class="form-label">Category</label>
-            <input type="text" class="form-control form-control-fh" id="category" name="category" required placeholder="e.g. Web Design, Mobile Development">
-          </div>
-
-          <div class="mb-4">
-            <label for="budget" class="form-label">Estimated Budget ($)</label>
-            <div class="input-group">
-              <span class="input-group-text border-end-0 bg-transparent border-2" style="border-color: #e2dfd8; color: #888;">$</span>
-              <input type="number" class="form-control border-start-0 border-2 shadow-none" id="budget" name="budget" required min="10" placeholder="500" style="border-color: #e2dfd8; padding: 0.6rem;">
+<div class="hero-section">
+    <div class="container hero-content text-center">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="hero-title">Post a <span>Job</span></h1>
+                <p class="text-white-50">Fill out the form below to create a new job posting</p>
             </div>
-          </div>
-
-          <div class="mb-5">
-            <label for="description" class="form-label">Project Description</label>
-            <textarea class="form-control form-control-fh" id="description" name="description" rows="5" required placeholder="Describe the deliverables, timeline, and any specific technologies required..."></textarea>
-          </div>
-
-          <div class="d-flex justify-content-end gap-3 border-top pt-4">
-            <a href="/jobs/my-postings" class="btn text-muted fw-bold px-4" style="text-decoration: none;">Cancel</a>
-            <button type="submit" class="btn btn-fh-primary px-5">
-              <i class="bi bi-send-check me-2"></i> Publish Job
-            </button>
-          </div>
-
-        </form>
-
-      </div>
+        </div>
     </div>
-  </div>
 </div>
 
-<?php require_once '../../views/partials/footer.php'; ?>
+<div class="container py-4">
+    <div class="step-indicator">
+        <div class="step-item">
+            <div class="step-circle active">1</div>
+            <div class="step-label active">Basic Info</div>
+        </div>
+        <div class="step-item">
+            <div class="step-circle">2</div>
+            <div class="step-label">Niche Details</div>
+        </div>
+        <div class="step-item">
+            <div class="step-circle">3</div>
+            <div class="step-label">Review & Submit</div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <form action="wizard-step2.php" method="POST" id="jobForm">
+            <div class="mb-4">
+                <label class="form-label">Job Title <span class="text-danger">*</span></label>
+                <input type="text" name="title" class="form-control" required
+                    placeholder="e.g., Need a professional translation">
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Job Description <span class="text-danger">*</span></label>
+                <textarea name="description" class="form-control" rows="5" required
+                    placeholder="Describe your project requirements..."></textarea>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Budget ($) <span class="text-danger">*</span></label>
+                <input type="number" name="budget" class="form-control" required placeholder="e.g., 1500">
+            </div>
+            <div class="mb-4">
+                <label class="form-label">Select Niche <span class="text-danger">*</span></label>
+                <div class="niche-grid" id="nicheGrid">
+                    <div class="niche-card" data-niche-id="1" data-niche-name="AI & Machine Learning">
+                        <div class="niche-icon">🤖</div>
+                        <div class="niche-name">AI & Machine Learning</div><small class="text-muted">Artificial
+                            Intelligence, ML</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="2" data-niche-name="Legal">
+                        <div class="niche-icon">⚖️</div>
+                        <div class="niche-name">Legal</div><small class="text-muted">Legal services, contracts</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="3" data-niche-name="Web Development">
+                        <div class="niche-icon">💻</div>
+                        <div class="niche-name">Web Development</div><small class="text-muted">Websites, web
+                            apps</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="4" data-niche-name="Mobile Development">
+                        <div class="niche-icon">📱</div>
+                        <div class="niche-name">Mobile Development</div><small class="text-muted">iOS, Android
+                            apps</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="5" data-niche-name="Design & Creative">
+                        <div class="niche-icon">🎨</div>
+                        <div class="niche-name">Design & Creative</div><small class="text-muted">UI/UX, Graphic
+                            Design</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="6" data-niche-name="Writing & Translation">
+                        <div class="niche-icon">✍️</div>
+                        <div class="niche-name">Writing & Translation</div><small class="text-muted">Content,
+                            Translation</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="7" data-niche-name="Marketing & SEO">
+                        <div class="niche-icon">📈</div>
+                        <div class="niche-name">Marketing & SEO</div><small class="text-muted">Digital Marketing</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="8" data-niche-name="Data Science">
+                        <div class="niche-icon">📊</div>
+                        <div class="niche-name">Data Science</div><small class="text-muted">Data Analysis, BI</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="9" data-niche-name="Cybersecurity">
+                        <div class="niche-icon">🔒</div>
+                        <div class="niche-name">Cybersecurity</div><small class="text-muted">Security, Testing</small>
+                    </div>
+                    <div class="niche-card" data-niche-id="10" data-niche-name="Blockchain">
+                        <div class="niche-icon">⛓️</div>
+                        <div class="niche-name">Blockchain</div><small class="text-muted">Crypto, Web3</small>
+                    </div>
+                </div>
+                <input type="hidden" name="niche_id" id="niche_id" required>
+                <input type="hidden" name="niche_name" id="niche_name">
+                <div id="nicheError" class="text-danger mt-2" style="display: none;">Please select a niche</div>
+            </div>
+            <div class="d-flex justify-content-between">
+                <a href="../home/index.php" class="btn btn-outline-custom">Cancel</a>
+                <button type="submit" class="btn btn-primary-custom" id="submitBtn" disabled>Continue →</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+const nicheCards = document.querySelectorAll('.niche-card');
+const nicheInput = document.getElementById('niche_id');
+const nicheNameInput = document.getElementById('niche_name');
+const submitBtn = document.getElementById('submitBtn');
+const nicheError = document.getElementById('nicheError');
+
+nicheCards.forEach(card => {
+    card.addEventListener('click', function() {
+        nicheCards.forEach(c => c.classList.remove('selected'));
+        this.classList.add('selected');
+        nicheInput.value = this.getAttribute('data-niche-id');
+        nicheNameInput.value = this.getAttribute('data-niche-name');
+        nicheError.style.display = 'none';
+        submitBtn.disabled = false;
+    });
+});
+
+document.getElementById('jobForm').addEventListener('submit', function(e) {
+    if (!nicheInput.value) {
+        e.preventDefault();
+        nicheError.style.display = 'block';
+    }
+});
+</script>
+
+<?php require_once __DIR__ . '/../partials/footer.php'; ?>

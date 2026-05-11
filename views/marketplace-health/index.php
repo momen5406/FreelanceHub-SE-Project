@@ -298,7 +298,7 @@ if (session_status() === PHP_SESSION_NONE) {
             </div>
             <div class="col-md-6">
                 <div class="chart-card">
-                    <h5>Weekly Job Trends (Last 7 Days)</h5>
+                    <h5>Weekly Job Trends (From May 11)</h5>
                     <?php if (!empty($weeklyTrends)): ?>
                     <div class="table-responsive">
                         <table class="table table-sm">

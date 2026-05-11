@@ -1,11 +1,7 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
--- https://www.phpmyadmin.net/
---
+-- Version: 5.2.1
 -- Host: 127.0.0.1
--- Generation Time: May 09, 2026 at 01:19 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.0.30
+-- Generation Time: May 11, 2026
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 
@@ -13,163 +9,214 @@ START TRANSACTION;
 
 SET time_zone = "+00:00";
 
-CREATE DATABASE IF NOT EXISTS `freelance_platform`;
+DROP DATABASE IF EXISTS `freelance_platform`;
+
+CREATE DATABASE `freelance_platform`;
 
 USE `freelance_platform`;
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */
-;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */
-;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */
-;
-/*!40101 SET NAMES utf8mb4 */
-;
-
---
--- Database: `freelance_platform`
---
-
--- --------------------------------------------------------
--- Table structure for table `audit_log`
--- --------------------------------------------------------
-
-CREATE TABLE `audit_log` (
-    `id` int(11) NOT NULL,
-    `user_id` int(11) NOT NULL,
-    `username` varchar(100) DEFAULT NULL,
-    `action` varchar(100) NOT NULL,
-    `entity_type` varchar(50) DEFAULT NULL,
-    `entity_id` int(11) DEFAULT NULL,
-    `old_value` text DEFAULT NULL,
-    `new_value` text DEFAULT NULL,
-    `ip_address` varchar(45) DEFAULT NULL,
-    `user_agent` text DEFAULT NULL,
-    `timestamp` timestamp NOT NULL DEFAULT current_timestamp()
+CREATE TABLE `roles` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `role_name` varchar(50) NOT NULL,
+    `description` text DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `role_name` (`role_name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 INSERT INTO
-    `audit_log` (
+    `roles` (
         `id`,
-        `user_id`,
-        `username`,
-        `action`,
-        `entity_type`,
-        `entity_id`,
-        `old_value`,
-        `new_value`,
-        `ip_address`,
-        `user_agent`,
-        `timestamp`
+        `role_name`,
+        `description`,
+        `created_at`
     )
 VALUES (
         1,
-        1,
-        'System Admin',
-        'login_success',
-        'Auth',
-        1,
-        '',
-        'User logged in',
-        '127.0.0.1',
-        NULL,
-        '2026-05-07 18:32:36'
+        'Super Admin',
+        'Full system access - all permissions',
+        NOW()
+    ),
+    (
+        2,
+        'Financial Admin',
+        'Manage payments, escrow, fees, refunds',
+        NOW()
+    ),
+    (
+        3,
+        'Dispute Mediator',
+        'View and resolve disputes only',
+        NOW()
+    ),
+    (
+        4,
+        'Tech Support',
+        'Manage users, view logs, reset passwords',
+        NOW()
+    ),
+    (
+        5,
+        'Client',
+        'Post jobs and hire freelancers',
+        NOW()
+    ),
+    (
+        6,
+        'Freelancer',
+        'Apply for jobs and earn money',
+        NOW()
     );
 
--- --------------------------------------------------------
--- Table structure for table `dispute`
--- --------------------------------------------------------
-
-CREATE TABLE `dispute` (
-    `id` int(11) NOT NULL,
-    `reason` text NOT NULL,
-    `status` enum(
-        'Open',
-        'Under Review',
-        'Resolved',
-        'Dismissed'
-    ) DEFAULT 'Open',
-    `job_id` int(11) NOT NULL,
-    `raised_by_id` int(11) NOT NULL,
-    `against_user_id` int(11) NOT NULL
+CREATE TABLE `users` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `name` varchar(100) NOT NULL,
+    `email` varchar(100) NOT NULL,
+    `password` varchar(255) NOT NULL,
+    `role` enum(
+        'Admin',
+        'Client',
+        'Freelancer',
+        'Financial',
+        'Tech Support',
+        'Dispute Mediator'
+    ) NOT NULL DEFAULT 'Client',
+    `reputation_score` decimal(3, 2) DEFAULT 0.00,
+    `is_verified` tinyint(1) NOT NULL DEFAULT 0,
+    `role_id` int(11) DEFAULT 5,
+    `wallet_balance` decimal(10, 2) DEFAULT 10000.00,
+    `total_spent` decimal(10, 2) DEFAULT 0.00,
+    `total_earned` decimal(10, 2) DEFAULT 0.00,
+    `total_lifetime_value` decimal(10, 2) DEFAULT 0.00,
+    `country_code` varchar(2) DEFAULT 'EG',
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `role_id` (`role_id`),
+    FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
--- --------------------------------------------------------
--- Table structure for table `escrow_transactions`
--- --------------------------------------------------------
-
-CREATE TABLE `escrow_transactions` (
-    `id` int(11) NOT NULL,
-    `amount` int(11) NOT NULL,
-    `status` enum(
-        'Locked',
-        'Released',
-        'Refunded'
-    ) DEFAULT 'Locked',
-    `milestone_id` int(11) NOT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- Table structure for table `expert_search_index`
--- --------------------------------------------------------
-
-CREATE TABLE `expert_search_index` (
-    `id` int(11) NOT NULL,
-    `freelancer_id` int(11) NOT NULL,
-    `freelancer_name` varchar(100) DEFAULT NULL,
-    `freelancer_email` varchar(100) DEFAULT NULL,
-    `reputation_score` decimal(3, 2) DEFAULT NULL,
-    `total_projects_completed` int(11) DEFAULT 0,
-    `skills` text DEFAULT NULL,
-    `rating_avg` decimal(3, 2) DEFAULT 0.00,
-    `total_earned` int(11) DEFAULT 0,
-    `last_updated` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- Table structure for table `jobs`
--- --------------------------------------------------------
-
-CREATE TABLE `jobs` (
-    `id` int(11) NOT NULL,
-    `title` varchar(100) NOT NULL,
-    `description` text NOT NULL,
-    `status` enum(
-        'Open',
-        'In Progress',
-        'Completed'
-    ) DEFAULT 'Open',
-    `client_id` int(11) NOT NULL,
-    `niche_id` int(11) DEFAULT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- Table structure for table `milestones`
--- --------------------------------------------------------
-
-CREATE TABLE `milestones` (
-    `id` int(11) NOT NULL,
-    `title` varchar(100) NOT NULL,
-    `deadline_date` date NOT NULL,
-    `status` enum(
-        'Pending',
-        'Awaiting Approval',
-        'Approved',
-        'Rescheduled'
-    ) DEFAULT 'Pending',
-    `job_id` int(11) NOT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- Table structure for table `niche_categories`
--- --------------------------------------------------------
+INSERT INTO
+    `users` (
+        `id`,
+        `name`,
+        `email`,
+        `password`,
+        `role`,
+        `reputation_score`,
+        `is_verified`,
+        `role_id`,
+        `wallet_balance`,
+        `total_spent`,
+        `total_earned`,
+        `total_lifetime_value`,
+        `country_code`,
+        `created_at`
+    )
+VALUES (
+        1,
+        'System Admin',
+        'admin@freelance.com',
+        'pass_123',
+        'Admin',
+        5.00,
+        1,
+        1,
+        50000.00,
+        0.00,
+        0.00,
+        0.00,
+        'EG',
+        NOW()
+    ),
+    (
+        2,
+        'Sarah Client',
+        'sarah@business.com',
+        'pass_123',
+        'Client',
+        4.50,
+        1,
+        5,
+        25000.00,
+        5000.00,
+        0.00,
+        5000.00,
+        'US',
+        NOW()
+    ),
+    (
+        3,
+        'Momen Freelancer',
+        'momen@dev.com',
+        'pass_123',
+        'Freelancer',
+        4.90,
+        1,
+        6,
+        5000.00,
+        0.00,
+        2500.00,
+        2500.00,
+        'EG',
+        NOW()
+    ),
+    (
+        4,
+        'John Freelancer',
+        'john@dev.com',
+        'pass_123',
+        'Freelancer',
+        4.80,
+        1,
+        6,
+        3000.00,
+        0.00,
+        1500.00,
+        1500.00,
+        'UK',
+        NOW()
+    ),
+    (
+        5,
+        'Alice Client',
+        'alice@company.com',
+        'pass_123',
+        'Client',
+        4.20,
+        1,
+        5,
+        15000.00,
+        2000.00,
+        0.00,
+        2000.00,
+        'AE',
+        NOW()
+    ),
+    (
+        6,
+        'TechCorp',
+        'tech@corp.com',
+        'pass_123',
+        'Client',
+        4.70,
+        1,
+        5,
+        50000.00,
+        10000.00,
+        0.00,
+        10000.00,
+        'SA',
+        NOW()
+    );
 
 CREATE TABLE `niche_categories` (
-    `id` int(11) NOT NULL,
+    `id` int(11) NOT NULL AUTO_INCREMENT,
     `name` varchar(100) NOT NULL,
     `description` text DEFAULT NULL,
     `icon` varchar(50) DEFAULT NULL,
-    `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `name` (`name`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 INSERT INTO
@@ -185,121 +232,435 @@ VALUES (
         'AI & Machine Learning',
         'Artificial Intelligence, ML, Deep Learning',
         '🤖',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         2,
         'Legal',
         'Legal services, contracts, compliance',
         '⚖️',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         3,
         'Web Development',
         'Websites, web apps, frontend, backend',
         '💻',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         4,
         'Mobile Development',
         'iOS, Android, React Native',
         '📱',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         5,
         'Design & Creative',
         'UI/UX, Graphic Design, Logo',
         '🎨',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         6,
         'Writing & Translation',
         'Content, Copywriting, Translation',
         '✍️',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         7,
         'Marketing & SEO',
         'Digital Marketing, SEO, Social Media',
         '📈',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         8,
         'Data Science',
         'Data Analysis, BI, Analytics',
         '📊',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         9,
         'Cybersecurity',
-        'Security, Penetration Testing',
+        'Security, Pen测试, Testing',
         '🔒',
-        '2026-05-08 12:29:07'
+        NOW()
     ),
     (
         10,
         'Blockchain',
         'Crypto, Web3, Smart Contracts',
         '⛓️',
-        '2026-05-08 12:29:07'
+        NOW()
     );
 
--- --------------------------------------------------------
--- Table structure for table `niche_performance`
--- --------------------------------------------------------
-
-CREATE TABLE `niche_performance` (
-    `id` int(11) NOT NULL,
+CREATE TABLE `niche_fields` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
     `niche_id` int(11) NOT NULL,
-    `total_jobs` int(11) DEFAULT 0,
-    `active_jobs` int(11) DEFAULT 0,
-    `completed_jobs` int(11) DEFAULT 0,
-    `total_proposals` int(11) DEFAULT 0,
-    `total_spent` int(11) DEFAULT 0,
-    `avg_budget` decimal(10, 2) DEFAULT 0.00,
-    `growth_rate` decimal(5, 2) DEFAULT 0.00,
-    `month_year` date NOT NULL,
-    `updated_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- Table structure for table `notifications`
--- --------------------------------------------------------
-
-CREATE TABLE `notifications` (
-    `id` int(11) NOT NULL,
-    `message` text NOT NULL,
-    `is_read` tinyint(1) DEFAULT 0,
-    `user_id` int(11) NOT NULL
+    `field_name` varchar(100) NOT NULL,
+    `field_label` varchar(100) NOT NULL,
+    `field_type` enum(
+        'text',
+        'number',
+        'select',
+        'multiselect',
+        'textarea'
+    ) DEFAULT 'text',
+    `options` text DEFAULT NULL,
+    `is_required` tinyint(1) DEFAULT 0,
+    `placeholder` varchar(255) DEFAULT NULL,
+    `order` int(11) DEFAULT 0,
+    PRIMARY KEY (`id`),
+    KEY `niche_id` (`niche_id`),
+    FOREIGN KEY (`niche_id`) REFERENCES `niche_categories` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 INSERT INTO
-    `notifications` (
-        `id`,
-        `message`,
-        `is_read`,
-        `user_id`
+    `niche_fields` (
+        `niche_id`,
+        `field_name`,
+        `field_label`,
+        `field_type`,
+        `options`,
+        `is_required`,
+        `placeholder`,
+        `order`
     )
 VALUES (
         1,
-        'Your proposal for Next.js E-commerce Platform was accepted!',
-        0,
+        'ml_framework',
+        'ML Framework',
+        'select',
+        '["TensorFlow","PyTorch","Scikit-learn","Keras"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        1,
+        'data_stack',
+        'Data Stack',
+        'multiselect',
+        '["Python","Pandas","NumPy","SQL","Spark"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        1,
+        'algorithm_type',
+        'Algorithm Type',
+        'select',
+        '["Classification","Regression","Clustering","NLP"]',
+        1,
+        NULL,
         3
+    ),
+    (
+        2,
+        'document_type',
+        'Document Type',
+        'select',
+        '["Contract","NDA","Terms of Service","Privacy Policy"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        2,
+        'jurisdiction',
+        'Jurisdiction',
+        'text',
+        NULL,
+        1,
+        'e.g., Egypt, USA, UK',
+        2
+    ),
+    (
+        3,
+        'frontend',
+        'Frontend Technologies',
+        'multiselect',
+        '["React","Vue","Angular","HTML/CSS","JavaScript"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        3,
+        'backend',
+        'Backend Technologies',
+        'multiselect',
+        '["Node.js","PHP","Python","Java","C#"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        3,
+        'database',
+        'Database',
+        'multiselect',
+        '["MySQL","PostgreSQL","MongoDB","Firebase"]',
+        0,
+        NULL,
+        3
+    ),
+    (
+        4,
+        'platform',
+        'Platform',
+        'select',
+        '["iOS","Android","Both"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        4,
+        'framework',
+        'Framework',
+        'select',
+        '["React Native","Flutter","Swift","Kotlin"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        5,
+        'software',
+        'Design Software',
+        'multiselect',
+        '["Photoshop","Illustrator","Figma","InDesign","After Effects"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        5,
+        'file_format',
+        'Delivery Format',
+        'select',
+        '["PSD","AI","PDF","PNG","SVG","Figma"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        6,
+        'source_language',
+        'Source Language',
+        'select',
+        '["English","Arabic","French","Spanish","German"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        6,
+        'target_language',
+        'Target Language',
+        'select',
+        '["Arabic","English","French","Spanish","German"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        6,
+        'word_count',
+        'Word Count',
+        'number',
+        NULL,
+        1,
+        'e.g., 5000',
+        3
+    ),
+    (
+        7,
+        'marketing_type',
+        'Marketing Type',
+        'select',
+        '["SEO","Social Media","Email","PPC","Content"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        7,
+        'platform',
+        'Platform',
+        'multiselect',
+        '["Google","Facebook","Instagram","LinkedIn","Twitter"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        8,
+        'data_stack',
+        'Data Stack',
+        'multiselect',
+        '["Python","R","SQL","Tableau","Power BI"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        8,
+        'analysis_type',
+        'Analysis Type',
+        'select',
+        '["Descriptive","Predictive","Prescriptive","Diagnostic"]',
+        1,
+        NULL,
+        2
+    ),
+    (
+        9,
+        'security_type',
+        'Security Type',
+        'select',
+        '["Penetration Testing","Compliance","Audit","Risk Assessment"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        9,
+        'certification',
+        'Required Certification',
+        'select',
+        '["CISSP","CEH","CISM","Security+","None"]',
+        0,
+        NULL,
+        2
+    ),
+    (
+        10,
+        'blockchain_type',
+        'Blockchain Type',
+        'select',
+        '["Ethereum","Solana","Bitcoin","Hyperledger","Polygon"]',
+        1,
+        NULL,
+        1
+    ),
+    (
+        10,
+        'smart_contract',
+        'Smart Contract Language',
+        'select',
+        '["Solidity","Rust","Go","C++"]',
+        1,
+        NULL,
+        2
     );
 
--- --------------------------------------------------------
--- Table structure for table `proposals`
--- --------------------------------------------------------
+CREATE TABLE `jobs` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `title` varchar(100) NOT NULL,
+    `description` text NOT NULL,
+    `status` enum(
+        'Open',
+        'In Progress',
+        'Completed'
+    ) DEFAULT 'Open',
+    `client_id` int(11) NOT NULL,
+    `niche_id` int(11) DEFAULT NULL,
+    `budget` decimal(10, 2) DEFAULT NULL,
+    `assigned_freelancer_id` int(11) DEFAULT NULL,
+    `dynamic_fields` text DEFAULT NULL,
+    `is_private` tinyint(1) DEFAULT 0,
+    `invited_freelancers` text DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `client_id` (`client_id`),
+    KEY `niche_id` (`niche_id`),
+    KEY `assigned_freelancer_id` (`assigned_freelancer_id`),
+    FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`niche_id`) REFERENCES `niche_categories` (`id`),
+    FOREIGN KEY (`assigned_freelancer_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+INSERT INTO
+    `jobs` (
+        `id`,
+        `title`,
+        `description`,
+        `status`,
+        `client_id`,
+        `niche_id`,
+        `budget`,
+        `assigned_freelancer_id`,
+        `dynamic_fields`,
+        `is_private`,
+        `invited_freelancers`,
+        `created_at`
+    )
+VALUES (
+        1,
+        'AI-Powered Chatbot',
+        'Build an AI chatbot for customer service',
+        'In Progress',
+        2,
+        1,
+        5000.00,
+        3,
+        '{"ml_framework":"TensorFlow","data_stack":["Python","TensorFlow"],"algorithm_type":"NLP"}',
+        0,
+        NULL,
+        NOW()
+    ),
+    (
+        2,
+        'E-commerce Website',
+        'Full stack e-commerce platform',
+        'Open',
+        5,
+        3,
+        3000.00,
+        NULL,
+        '{"frontend":["React"],"backend":["Node.js"],"database":"MongoDB"}',
+        0,
+        NULL,
+        NOW()
+    ),
+    (
+        3,
+        'Legal Contract Review',
+        'Review and draft legal contracts',
+        'Open',
+        2,
+        2,
+        1500.00,
+        NULL,
+        '{"document_type":"Contract","jurisdiction":"Egypt"}',
+        0,
+        NULL,
+        NOW()
+    ),
+    (
+        4,
+        'Mobile App Development',
+        'iOS and Android fitness app',
+        'In Progress',
+        6,
+        4,
+        8000.00,
+        4,
+        '{"platform":"Both","framework":"React Native"}',
+        0,
+        NULL,
+        NOW()
+    );
 
 CREATE TABLE `proposals` (
-    `id` int(11) NOT NULL,
+    `id` int(11) NOT NULL AUTO_INCREMENT,
     `bid_amount` int(11) NOT NULL,
     `description` text NOT NULL,
     `status` enum(
@@ -308,347 +669,448 @@ CREATE TABLE `proposals` (
         'Rejected'
     ) DEFAULT 'Pending',
     `freelancer_id` int(11) NOT NULL,
-    `job_id` int(11) NOT NULL
-) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
-
--- --------------------------------------------------------
--- Table structure for table `roles`
--- --------------------------------------------------------
-
-CREATE TABLE `roles` (
-    `id` int(11) NOT NULL,
-    `role_name` varchar(50) NOT NULL,
-    `description` text DEFAULT NULL,
-    `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+    `job_id` int(11) NOT NULL,
+    `version` int(11) DEFAULT 1,
+    `parent_version_id` int(11) DEFAULT NULL,
+    `expires_at` timestamp NULL DEFAULT NULL,
+    `withdrawn_at` timestamp NULL DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `freelancer_id` (`freelancer_id`),
+    KEY `job_id` (`job_id`),
+    KEY `parent_version_id` (`parent_version_id`),
+    FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`parent_version_id`) REFERENCES `proposals` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 INSERT INTO
-    `roles` (
+    `proposals` (
         `id`,
-        `role_name`,
+        `bid_amount`,
         `description`,
+        `status`,
+        `freelancer_id`,
+        `job_id`,
+        `version`,
+        `parent_version_id`,
+        `expires_at`,
+        `withdrawn_at`,
         `created_at`
     )
 VALUES (
         1,
-        'Super Admin',
-        'Full system access - all permissions',
-        '2026-05-07 19:41:20'
+        4500,
+        'I will build the AI chatbot with TensorFlow',
+        'Accepted',
+        3,
+        1,
+        1,
+        NULL,
+        DATE_ADD(NOW(), INTERVAL 30 DAY),
+        NULL,
+        NOW()
     ),
     (
         2,
-        'Financial Admin',
-        'Manage payments, escrow, fees, refunds',
-        '2026-05-07 19:41:20'
+        4200,
+        'Updated proposal with faster delivery',
+        'Pending',
+        3,
+        1,
+        2,
+        1,
+        DATE_ADD(NOW(), INTERVAL 30 DAY),
+        NULL,
+        NOW()
     ),
     (
         3,
-        'Dispute Mediator',
-        'View and resolve disputes only',
-        '2026-05-07 19:41:20'
-    ),
-    (
+        2800,
+        'Full e-commerce solution with React',
+        'Pending',
         4,
-        'Tech Support',
-        'Manage users, view logs, reset passwords',
-        '2026-05-07 19:41:20'
-    ),
-    (
-        5,
-        'Client',
-        'Post jobs and hire freelancers',
-        '2026-05-07 19:41:20'
-    ),
-    (
-        6,
-        'Freelancer',
-        'Apply for jobs and earn money',
-        '2026-05-07 19:41:20'
+        2,
+        1,
+        NULL,
+        DATE_ADD(NOW(), INTERVAL 30 DAY),
+        NULL,
+        NOW()
     );
 
--- --------------------------------------------------------
--- Table structure for table `users`
--- --------------------------------------------------------
-
-CREATE TABLE `users` (
-    `id` int(11) NOT NULL,
-    `name` varchar(100) NOT NULL,
-    `email` varchar(100) NOT NULL,
-    `password` varchar(255) NOT NULL,
-    `role` enum(
-        'Admin',
-        'Client',
-        'Freelancer',
-        'Financial',
-        'Tech Support',
-        'Dispute Mediator'
-    ) NOT NULL DEFAULT 'Client',
-    `reputation_score` decimal(3, 2) DEFAULT 0.00,
-    `is_verified` tinyint(1) NOT NULL,
-    `role_id` int(11) DEFAULT 1,
-    `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+CREATE TABLE `milestones` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `title` varchar(100) NOT NULL,
+    `deadline_date` date NOT NULL,
+    `status` enum(
+        'Pending',
+        'In Progress',
+        'Awaiting Approval',
+        'Approved',
+        'Rescheduled',
+        'Funds Locked',
+        'Completed'
+    ) DEFAULT 'Pending',
+    `job_id` int(11) NOT NULL,
+    `escrow_id` int(11) DEFAULT NULL,
+    `amount` decimal(10, 2) NOT NULL DEFAULT 0,
+    `partial_released` decimal(10, 2) DEFAULT 0,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `job_id` (`job_id`),
+    KEY `escrow_id` (`escrow_id`),
+    FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 INSERT INTO
-    `users` (
+    `milestones` (
         `id`,
-        `name`,
-        `email`,
-        `password`,
-        `role`,
-        `reputation_score`,
-        `is_verified`,
-        `role_id`,
+        `title`,
+        `deadline_date`,
+        `status`,
+        `job_id`,
+        `escrow_id`,
+        `amount`,
+        `partial_released`,
         `created_at`
     )
 VALUES (
         1,
-        'System Admin',
-        'admin@freelance.com',
-        'pass_123',
-        'Admin',
-        5.00,
+        'Phase 1: AI Model Development',
+        '2026-06-15',
+        'Funds Locked',
         1,
+        NULL,
+        2500.00,
+        0,
+        NOW()
+    ),
+    (
+        2,
+        'Phase 2: Integration & Testing',
+        '2026-07-01',
+        'Pending',
         1,
-        '2026-05-07 19:23:44'
+        NULL,
+        2500.00,
+        0,
+        NOW()
     ),
     (
         3,
-        'Momen',
-        'momen@dev.com',
-        'pass_123',
-        'Tech Support',
-        4.90,
-        1,
-        6,
-        '2026-05-07 19:23:44'
+        'UI/UX Design',
+        '2026-06-10',
+        'Approved',
+        2,
+        NULL,
+        1500.00,
+        0,
+        NOW()
     ),
     (
-        5,
-        'mimi',
-        'mimi@gmail.com',
-        '123456789',
-        'Client',
-        0.00,
-        1,
-        5,
-        '2026-05-07 19:23:44'
-    ),
-    (
-        6,
-        'aza',
-        'aza@freelance.com',
-        '123456789',
-        'Dispute Mediator',
-        0.00,
-        1,
-        6,
-        '2026-05-07 19:23:44'
-    ),
-    (
-        7,
-        'www',
-        'www@gmail.com',
-        '123456789',
-        'Freelancer',
-        0.00,
-        1,
-        6,
-        '2026-05-07 19:23:44'
-    ),
-    (
-        8,
-        'aw',
-        'aw@freelance.com',
-        '123456789',
-        'Client',
-        0.00,
-        1,
-        5,
-        '2026-05-07 19:23:44'
-    ),
-    (
-        9,
-        'ww',
-        'ww@freelance.com',
-        'pass_123',
-        'Freelancer',
-        0.00,
-        1,
-        6,
-        '2026-05-07 19:23:44'
-    ),
-    (
-        24,
-        'qwqw',
-        'qwqw@freelance.com',
-        '123456',
-        'Admin',
-        0.00,
-        1,
-        1,
-        '2026-05-08 12:00:41'
+        4,
+        'Frontend Development',
+        '2026-06-25',
+        'Pending',
+        2,
+        NULL,
+        1500.00,
+        0,
+        NOW()
     );
 
--- --------------------------------------------------------
--- Indexes
--- --------------------------------------------------------
+CREATE TABLE `escrow_transactions` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `amount` decimal(10, 2) NOT NULL,
+    `status` enum(
+        'Locked',
+        'Released',
+        'Refunded'
+    ) DEFAULT 'Locked',
+    `milestone_id` int(11) NOT NULL,
+    `partial_released` decimal(10, 2) DEFAULT 0,
+    `released_at` timestamp NULL DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `milestone_id` (`milestone_id`),
+    FOREIGN KEY (`milestone_id`) REFERENCES `milestones` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `audit_log`
-ADD PRIMARY KEY (`id`),
-ADD KEY `idx_user` (`user_id`),
-ADD KEY `idx_action` (`action`),
-ADD KEY `idx_entity` (`entity_type`, `entity_id`),
-ADD KEY `idx_timestamp` (`timestamp`);
+INSERT INTO
+    `escrow_transactions` (
+        `id`,
+        `amount`,
+        `status`,
+        `milestone_id`,
+        `partial_released`,
+        `released_at`,
+        `created_at`
+    )
+VALUES (
+        1,
+        2500.00,
+        'Locked',
+        1,
+        0,
+        NULL,
+        NOW()
+    ),
+    (
+        2,
+        1500.00,
+        'Released',
+        3,
+        1500.00,
+        NOW(),
+        NOW()
+    );
 
-ALTER TABLE `dispute`
-ADD PRIMARY KEY (`id`),
-ADD KEY `job_id` (`job_id`),
-ADD KEY `raised_by_id` (`raised_by_id`),
-ADD KEY `against_user_id` (`against_user_id`);
+CREATE TABLE `partial_releases` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `escrow_id` int(11) NOT NULL,
+    `percentage` int(11) NOT NULL,
+    `amount` decimal(10, 2) NOT NULL,
+    `reason` text DEFAULT NULL,
+    `status` enum(
+        'Pending',
+        'Approved',
+        'Released'
+    ) DEFAULT 'Pending',
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `released_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `escrow_id` (`escrow_id`),
+    FOREIGN KEY (`escrow_id`) REFERENCES `escrow_transactions` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `escrow_transactions`
-ADD PRIMARY KEY (`id`),
-ADD KEY `milestone_id` (`milestone_id`);
+CREATE TABLE `dispute` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `reason` text NOT NULL,
+    `status` enum(
+        'Open',
+        'Under Review',
+        'Resolved',
+        'Dismissed'
+    ) DEFAULT 'Open',
+    `job_id` int(11) NOT NULL,
+    `raised_by_id` int(11) NOT NULL,
+    `against_user_id` int(11) NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    `resolved_at` timestamp NULL DEFAULT NULL,
+    `resolution_notes` text DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `job_id` (`job_id`),
+    KEY `raised_by_id` (`raised_by_id`),
+    KEY `against_user_id` (`against_user_id`),
+    FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`raised_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`against_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `expert_search_index`
-ADD PRIMARY KEY (`id`),
-ADD KEY `freelancer_id` (`freelancer_id`),
-ADD KEY `idx_reputation` (`reputation_score`),
-ADD KEY `idx_completed` (`total_projects_completed`),
-ADD KEY `idx_rating` (`rating_avg`);
+INSERT INTO
+    `dispute` (
+        `id`,
+        `reason`,
+        `status`,
+        `job_id`,
+        `raised_by_id`,
+        `against_user_id`,
+        `created_at`
+    )
+VALUES (
+        1,
+        'Delayed delivery of milestone 1',
+        'Under Review',
+        1,
+        2,
+        3,
+        NOW()
+    );
 
-ALTER TABLE `expert_search_index`
-ADD FULLTEXT KEY `idx_skills` (`skills`);
+CREATE TABLE `dispute_messages` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dispute_id` int(11) NOT NULL,
+    `user_id` int(11) NOT NULL,
+    `message` text NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `dispute_id` (`dispute_id`),
+    KEY `user_id` (`user_id`),
+    FOREIGN KEY (`dispute_id`) REFERENCES `dispute` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `jobs`
-ADD PRIMARY KEY (`id`),
-ADD KEY `client_id` (`client_id`),
-ADD KEY `niche_id` (`niche_id`);
+CREATE TABLE `notifications` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `message` text NOT NULL,
+    `is_read` tinyint(1) DEFAULT 0,
+    `user_id` int(11) NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `milestones`
-ADD PRIMARY KEY (`id`),
-ADD KEY `job_id` (`job_id`);
+INSERT INTO
+    `notifications` (
+        `id`,
+        `message`,
+        `is_read`,
+        `user_id`,
+        `created_at`
+    )
+VALUES (
+        1,
+        'Your proposal for AI-Powered Chatbot was accepted!',
+        0,
+        3,
+        NOW()
+    ),
+    (
+        2,
+        'Milestone 1 funds have been locked',
+        0,
+        3,
+        NOW()
+    );
 
-ALTER TABLE `niche_categories`
-ADD PRIMARY KEY (`id`),
-ADD UNIQUE KEY `name` (`name`);
+CREATE TABLE `audit_log` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `username` varchar(100) DEFAULT NULL,
+    `action` varchar(100) NOT NULL,
+    `entity_type` varchar(50) DEFAULT NULL,
+    `entity_id` int(11) DEFAULT NULL,
+    `old_value` text DEFAULT NULL,
+    `new_value` text DEFAULT NULL,
+    `ip_address` varchar(45) DEFAULT NULL,
+    `user_agent` text DEFAULT NULL,
+    `timestamp` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_user` (`user_id`),
+    KEY `idx_action` (`action`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `niche_performance`
-ADD PRIMARY KEY (`id`),
-ADD UNIQUE KEY `unique_niche_month` (`niche_id`, `month_year`);
+CREATE TABLE `fee_tiers` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `min_lifetime_value` decimal(10, 2) NOT NULL,
+    `max_lifetime_value` decimal(10, 2) NOT NULL,
+    `fee_percentage` decimal(5, 2) NOT NULL,
+    `tier_name` varchar(50) NOT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `notifications`
-ADD PRIMARY KEY (`id`),
-ADD KEY `user_id` (`user_id`);
+INSERT INTO
+    `fee_tiers` (
+        `min_lifetime_value`,
+        `max_lifetime_value`,
+        `fee_percentage`,
+        `tier_name`
+    )
+VALUES (0, 1000, 15.00, 'Bronze'),
+    (1000, 5000, 12.00, 'Silver'),
+    (5000, 20000, 10.00, 'Gold'),
+    (
+        20000,
+        100000,
+        8.00,
+        'Platinum'
+    ),
+    (
+        100000,
+        9999999,
+        5.00,
+        'Diamond'
+    );
 
-ALTER TABLE `proposals`
-ADD PRIMARY KEY (`id`),
-ADD KEY `freelancer_id` (`freelancer_id`),
-ADD KEY `job_id` (`job_id`);
+CREATE TABLE `tax_records` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `transaction_id` int(11) DEFAULT NULL,
+    `amount` decimal(10, 2) NOT NULL,
+    `tax_rate` decimal(5, 2) NOT NULL,
+    `tax_amount` decimal(10, 2) NOT NULL,
+    `client_country` varchar(2) NOT NULL,
+    `freelancer_country` varchar(2) NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `roles`
-ADD PRIMARY KEY (`id`),
-ADD UNIQUE KEY `role_name` (`role_name`);
+CREATE TABLE `interviews` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `job_id` int(11) NOT NULL,
+    `client_id` int(11) NOT NULL,
+    `freelancer_id` int(11) NOT NULL,
+    `scheduled_at` timestamp NULL DEFAULT NULL,
+    `meeting_link` varchar(255) DEFAULT NULL,
+    `status` enum(
+        'scheduled',
+        'completed',
+        'cancelled'
+    ) DEFAULT 'scheduled',
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `job_id` (`job_id`),
+    KEY `client_id` (`client_id`),
+    KEY `freelancer_id` (`freelancer_id`),
+    FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `users`
-ADD PRIMARY KEY (`id`),
-ADD KEY `role_id` (`role_id`);
+CREATE TABLE `ndas` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `job_id` int(11) NOT NULL,
+    `client_id` int(11) NOT NULL,
+    `freelancer_id` int(11) NOT NULL,
+    `content` text NOT NULL,
+    `status` enum(
+        'pending',
+        'signed',
+        'rejected'
+    ) DEFAULT 'pending',
+    `signed_at` timestamp NULL DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `job_id` (`job_id`),
+    KEY `client_id` (`client_id`),
+    KEY `freelancer_id` (`freelancer_id`),
+    FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
--- --------------------------------------------------------
--- AUTO_INCREMENT
--- --------------------------------------------------------
+CREATE TABLE `activity_log` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) DEFAULT NULL,
+    `action` varchar(100) NOT NULL,
+    `details` text DEFAULT NULL,
+    `ip_address` varchar(45) DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `idx_user` (`user_id`),
+    KEY `idx_action` (`action`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
-ALTER TABLE `audit_log`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 2;
-
-ALTER TABLE `dispute`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 2;
-
-ALTER TABLE `escrow_transactions`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 3;
-
-ALTER TABLE `expert_search_index`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `jobs`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 2;
-
-ALTER TABLE `milestones`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 3;
-
-ALTER TABLE `niche_categories`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 21;
-
-ALTER TABLE `niche_performance`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE `notifications`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 3;
-
-ALTER TABLE `proposals`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 2;
-
-ALTER TABLE `roles`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 13;
-
-ALTER TABLE `users`
-MODIFY `id` int(11) NOT NULL AUTO_INCREMENT,
-AUTO_INCREMENT = 25;
-
--- --------------------------------------------------------
--- Foreign Key Constraints
--- --------------------------------------------------------
-
-ALTER TABLE `audit_log`
-ADD CONSTRAINT `audit_log_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `dispute`
-ADD CONSTRAINT `dispute_ibfk_1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
-ADD CONSTRAINT `dispute_ibfk_2` FOREIGN KEY (`raised_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-ADD CONSTRAINT `dispute_ibfk_3` FOREIGN KEY (`against_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `escrow_transactions`
-ADD CONSTRAINT `escrow_transactions_ibfk_1` FOREIGN KEY (`milestone_id`) REFERENCES `milestones` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `expert_search_index`
-ADD CONSTRAINT `expert_search_index_ibfk_1` FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `jobs`
-ADD CONSTRAINT `jobs_ibfk_1` FOREIGN KEY (`client_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-ADD CONSTRAINT `jobs_ibfk_2` FOREIGN KEY (`niche_id`) REFERENCES `niche_categories` (`id`),
-ADD CONSTRAINT `jobs_ibfk_3` FOREIGN KEY (`niche_id`) REFERENCES `niche_categories` (`id`);
-
-ALTER TABLE `milestones`
-ADD CONSTRAINT `milestones_ibfk_1` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `niche_performance`
-ADD CONSTRAINT `niche_performance_ibfk_1` FOREIGN KEY (`niche_id`) REFERENCES `niche_categories` (`id`);
-
-ALTER TABLE `notifications`
-ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `proposals`
-ADD CONSTRAINT `proposals_ibfk_1` FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-ADD CONSTRAINT `proposals_ibfk_2` FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE;
-
-ALTER TABLE `users`
-ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`);
+CREATE TABLE `job_invitations` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `job_id` int(11) NOT NULL,
+    `freelancer_id` int(11) NOT NULL,
+    `status` enum(
+        'pending',
+        'accepted',
+        'declined'
+    ) DEFAULT 'pending',
+    `invited_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `responded_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `job_id` (`job_id`),
+    KEY `freelancer_id` (`freelancer_id`),
+    FOREIGN KEY (`job_id`) REFERENCES `jobs` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`freelancer_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
 COMMIT;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */
-;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */
-;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */
-;

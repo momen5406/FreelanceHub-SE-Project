@@ -71,7 +71,12 @@ class MarketplaceHealth
 
     public function getCompletedContractsCount()
     {
-        $query = "SELECT COUNT(*) as count FROM Jobs WHERE status = 'Completed'";
+        $query = "SELECT COUNT(DISTINCT m.id) as count
+                  FROM Milestones m
+                  LEFT JOIN Deliverables d ON d.milestone_id = m.id
+                  LEFT JOIN Escrow_Transactions e ON e.milestone_id = m.id
+                  WHERE m.status = 'Completed'
+                    AND (d.status = 'Approved' OR e.status = 'Released')";
         $result = $this->db->select($query);
         if ($result && count($result) > 0) {
             return $result[0]['count'] ?? 0;

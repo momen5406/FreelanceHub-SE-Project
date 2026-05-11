@@ -1,12 +1,14 @@
-<?php 
+<?php
 
 require_once "../../app/core/database.php";
 require_once "../../app/models/User.php";
 
-class AuthController {
+class AuthController
+{
   protected $db;
 
-  public function login(User $user) {
+  public function login(User $user)
+  {
     $this->db = new Database;
 
     if ($this->db->openConnection()) {
@@ -19,18 +21,23 @@ class AuthController {
         $this->db->closeConnection();
         return false;
       } else {
-        // No User found
         if (count($result) == 0) {
           if (session_status() === PHP_SESSION_NONE) session_start();
-          $_SESSION["errMsg"] = "Invalid Credentials."; 
+          $_SESSION["errMsg"] = "Invalid Credentials.";
           $this->db->closeConnection();
           return false;
-        } else { // There is User found
+        } else {
           session_start();
           if (session_status() === PHP_SESSION_NONE) session_start();
           $_SESSION["user_id"] = $result[0]["id"];
           $_SESSION["username"] = $result[0]["name"];
           $_SESSION["role"] = $result[0]["role"];
+          $_SESSION["user"] = [
+            "id" => $result[0]["id"],
+            "name" => $result[0]["name"],
+            "email" => $result[0]["email"],
+            "role" => $result[0]["role"]
+          ];
 
           $this->db->closeConnection();
           return true;
@@ -43,7 +50,8 @@ class AuthController {
     }
   }
 
-  public function register(User $user) {
+  public function register(User $user)
+  {
     $this->db = new Database;
     if ($this->db->openConnection()) {
       $query = "INSERT INTO users (name, email, password, role, is_verified) VALUES ('$user->name', '$user->email', '$user->password', '$user->role', 1)";
@@ -63,7 +71,8 @@ class AuthController {
     }
   }
 
-  public function logout() {
+  public function logout()
+  {
     if (session_status() === PHP_SESSION_NONE) {
       session_start();
     }
@@ -75,5 +84,3 @@ class AuthController {
     exit();
   }
 }
-
-?>

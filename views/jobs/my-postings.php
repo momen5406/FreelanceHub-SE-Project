@@ -16,7 +16,13 @@ $clientId = $_SESSION['user_id'];
 
 $myJobs = $db->select("
     SELECT j.*, n.name as niche_name,
-           (SELECT COUNT(*) FROM proposals WHERE job_id = j.id) as proposals_count
+           (SELECT COUNT(*) FROM proposals WHERE job_id = j.id) as proposals_count,
+           (SELECT COUNT(*) FROM milestones WHERE job_id = j.id) as milestones_count,
+           (SELECT COUNT(*) FROM milestones WHERE job_id = j.id AND status = 'Completed') as completed_milestones_count,
+           (SELECT COUNT(*) FROM milestones WHERE job_id = j.id AND status = 'Awaiting Approval') as awaiting_approval_count,
+           (SELECT COUNT(*) FROM deliverables d
+            JOIN milestones m ON d.milestone_id = m.id
+            WHERE m.job_id = j.id AND d.status = 'Approved') as approved_deliverables_count
     FROM jobs j
     LEFT JOIN niche_categories n ON j.niche_id = n.id
     WHERE j.client_id = $clientId
@@ -94,6 +100,24 @@ $db->closeConnection();
     font-weight: 600;
 }
 
+.status-awaiting {
+    background: #fff3cd;
+    color: #856404;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-approved {
+    background: #d4edda;
+    color: #155724;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
 .status-completed {
     background: #6c757d;
     color: white;
@@ -121,6 +145,12 @@ $db->closeConnection();
     </div>
     <?php else: ?>
     <?php foreach ($myJobs as $job): ?>
+    <?php
+        $milestonesCount = (int) ($job['milestones_count'] ?? 0);
+        $completedMilestonesCount = (int) ($job['completed_milestones_count'] ?? 0);
+        $awaitingApprovalCount = (int) ($job['awaiting_approval_count'] ?? 0);
+        $approvedDeliverablesCount = (int) ($job['approved_deliverables_count'] ?? 0);
+    ?>
     <div class="job-card">
         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
             <div class="flex-grow-1">
@@ -128,10 +158,16 @@ $db->closeConnection();
                     <h4 style="color: #1a1a2e;" class="mb-0"><?= htmlspecialchars($job['title']) ?></h4>
                     <?php if ($job['status'] == 'Open'): ?>
                     <span class="status-open">Open for Bids</span>
-                    <?php elseif ($job['status'] == 'In Progress'): ?>
-                    <span class="status-progress">In Progress</span>
-                    <?php else: ?>
+                    <?php elseif ($job['status'] == 'Completed'): ?>
                     <span class="status-completed">Completed</span>
+                    <?php elseif ($awaitingApprovalCount > 0): ?>
+                    <span class="status-awaiting">Awaiting Approval</span>
+                    <?php elseif ($approvedDeliverablesCount > 0 || $completedMilestonesCount > 0): ?>
+                    <span class="status-approved">
+                        Milestone Approved<?= $milestonesCount > 1 ? " ($completedMilestonesCount/$milestonesCount)" : '' ?>
+                    </span>
+                    <?php else: ?>
+                    <span class="status-progress">In Progress</span>
                     <?php endif; ?>
                 </div>
                 <div class="text-muted small mb-2">

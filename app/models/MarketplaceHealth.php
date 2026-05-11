@@ -177,18 +177,22 @@ class MarketplaceHealth
         return $data;
     }
 
-    public function getWeeklyTrends($days = 7)
+    public function getWeeklyTrends($days = 7, $startDate = '2026-05-11')
     {
         $data = [];
+        $startTimestamp = strtotime($startDate);
 
-        for ($i = $days - 1; $i >= 0; $i--) {
-            $date = date('Y-m-d', strtotime("-$i days"));
+        for ($i = 0; $i < $days; $i++) {
+            $date = date('Y-m-d', strtotime("+$i days", $startTimestamp));
             $data[$date] = 0;
         }
 
+        $endDate = date('Y-m-d', strtotime("+$days days", $startTimestamp));
+
         $query = "SELECT DATE(created_at) as date, COUNT(*) as count 
                   FROM Jobs 
-                  WHERE created_at >= DATE_SUB(NOW(), INTERVAL $days DAY)
+                  WHERE created_at >= '$startDate'
+                    AND created_at < '$endDate'
                   GROUP BY DATE(created_at)";
 
         $result = $this->db->select($query);

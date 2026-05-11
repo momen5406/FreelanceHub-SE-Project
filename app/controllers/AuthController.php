@@ -1,7 +1,7 @@
 <?php
 
-require_once "../../app/core/database.php";
-require_once "../../app/models/User.php";
+require_once __DIR__ . "/../core/database.php";
+require_once __DIR__ . "/../models/User.php";
 
 class AuthController
 {
@@ -92,7 +92,16 @@ class AuthController
     $_SESSION = array();
     session_destroy();
 
-    header("Location: ../../views/auth/login.php");
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = '';
+
+    if (($viewsPosition = strpos($scriptName, '/views/')) !== false) {
+      $basePath = substr($scriptName, 0, $viewsPosition);
+    } elseif (($publicPosition = strpos($scriptName, '/public/')) !== false) {
+      $basePath = substr($scriptName, 0, $publicPosition);
+    }
+
+    header("Location: {$basePath}/views/auth/login.php");
     exit();
   }
 }

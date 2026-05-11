@@ -55,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
         color: #e8a045;
     }
 
-    /* Nav links */
     .fh-navbar .nav-link {
         color: rgba(255, 255, 255, 0.72) !important;
         font-size: 0.875rem;
@@ -70,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
         color: #fff !important;
     }
 
-    /* Login ghost button */
     .btn-fh-login {
         color: rgba(255, 255, 255, 0.8) !important;
         background: transparent;
@@ -88,7 +86,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
         background: rgba(255, 255, 255, 0.05) !important;
     }
 
-    /* Sign up amber button */
     .btn-fh-signup {
         background: #e8a045 !important;
         color: #1a1a2e !important;
@@ -106,7 +103,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
         color: #1a1a2e !important;
     }
 
-    /* Admin badge */
     .btn-fh-admin {
         background: rgba(232, 160, 69, 0.15) !important;
         border: 1.5px solid rgba(232, 160, 69, 0.35) !important;
@@ -122,7 +118,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
         background: rgba(232, 160, 69, 0.25) !important;
     }
 
-    /* Profile pill dropdown toggle */
     .btn-fh-profile {
         display: flex;
         align-items: center;
@@ -157,7 +152,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
         flex-shrink: 0;
     }
 
-    /* Dropdown menu */
     .fh-navbar .dropdown-menu {
         background: #fff;
         border: 1px solid #e2dfd8;
@@ -203,7 +197,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
 
 <body>
 
-    <nav class="navbar navbar-expand-lg fh-navbar  mb-0">
+    <nav class="navbar navbar-expand-lg fh-navbar mb-0">
         <div class="container">
 
             <a class="navbar-brand" href="../../views/home/index.php">
@@ -244,85 +238,95 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
 
                     <?php if ($_SESSION['role'] === 'Client'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="../../views/jobs/create.php">
-                            <i class="bi bi-plus-circle me-1"></i>Post a Job
+                        <a class="nav-link" href="../../views/jobs/my-postings.php">
+                            <i class="bi bi-briefcase me-1"></i>My Jobs
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="../../views/jobs/my-postings.php">
-                            <i class="bi bi-folder2-open me-1"></i>My Jobs
+                        <a class="nav-link" href="../../views/client/pending-approvals.php">
+                            <i class="bi bi-clock-history me-1"></i>Pending Approvals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../../views/jobs/create.php">
+                            <i class="bi bi-plus-circle me-1"></i>Post a Job
                         </a>
                     </li>
 
                     <?php elseif ($_SESSION['role'] === 'Freelancer'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="../proposals/my-proposals.php">
+                        <a class="nav-link" href="../../views/proposals/my-proposals.php">
                             <i class="bi bi-file-text me-1"></i>My Proposals
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="../escrow/wallet.php">
+                        <a class="nav-link" href="../../views/freelancer/my-jobs.php">
+                            <i class="bi bi-briefcase me-1"></i>My Jobs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../freelancer/wallet.php">
                             <i class="bi bi-wallet2 me-1"></i>Wallet
                         </a>
                     </li>
 
-                    <<?php elseif ($_SESSION['role'] === 'Admin'): ?> <li class="nav-item">
+                    <?php elseif ($_SESSION['role'] === 'Admin'): ?>
+                    <li class="nav-item">
                         <a class="btn btn-fh-admin" href="../../views/admin/dashboard.php">
                             <i class="bi bi-shield-check me-1"></i>Admin Panel
                         </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-fh-admin" href="../../views/admin/manage-roles.php">
-                                <i class="bi bi-person-badge me-1"></i>Manage Roles
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="btn btn-fh-admin" href="../../public/marketplace-health.php">
-                                <i class="bi bi-graph-up me-1"></i>Marketplace Health
-                            </a>
-                        </li>
-                        <?php endif; ?>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-fh-admin" href="../../views/admin/manage-roles.php">
+                            <i class="bi bi-person-badge me-1"></i>Manage Roles
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-fh-admin" href="../../public/marketplace-health.php">
+                            <i class="bi bi-graph-up me-1"></i>Marketplace Health
+                        </a>
+                    </li>
+                    <?php endif; ?>
 
-                        <li class="nav-item dropdown">
-                            <a class="btn-fh-profile dropdown-toggle" href="#" id="userDropdown" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <span class="fh-avatar">
-                                    <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
-                                </span>
-                                <?= htmlspecialchars($_SESSION['username'] ?? 'Profile') ?>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                                <li>
-                                    <h6 class="dropdown-header">
-                                        <?= htmlspecialchars($_SESSION['username'] ?? '') ?>
-                                        <br><small class="text-muted"><?= $_SESSION['role'] ?? '' ?></small>
-                                    </h6>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="../../views/profile/view.php">
-                                        <i class="bi bi-gear"></i> Settings
-                                    </a>
-                                </li>
-                                <li>
-                                    <hr class="dropdown-divider">
-                                </li>
-                                <li>
-                                    <form action="" method="POST">
-                                        <input type="hidden" name="logout" value="true">
-                                        <button class="dropdown-item text-danger" type="submit">
-                                            <i class="bi bi-box-arrow-right"></i> Log Out
-                                        </button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
+                    <li class="nav-item dropdown">
+                        <a class="btn-fh-profile dropdown-toggle" href="#" id="userDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="fh-avatar">
+                                <?= strtoupper(substr($_SESSION['username'] ?? 'U', 0, 2)) ?>
+                            </span>
+                            <?= htmlspecialchars($_SESSION['username'] ?? 'Profile') ?>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <?= htmlspecialchars($_SESSION['username'] ?? '') ?>
+                                    <br><small class="text-muted"><?= $_SESSION['role'] ?? '' ?></small>
+                                </h6>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="../../views/profile/view.php">
+                                    <i class="bi bi-gear"></i> Settings
+                                </a>
+                            </li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <form action="" method="POST">
+                                    <input type="hidden" name="logout" value="true">
+                                    <button class="dropdown-item text-danger" type="submit">
+                                        <i class="bi bi-box-arrow-right"></i> Log Out
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
 
-                        <?php endif; ?>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- Page Content -->
     <div class="container-fluid px-0">
         <div class="container main-content min-vh-100 py-4">

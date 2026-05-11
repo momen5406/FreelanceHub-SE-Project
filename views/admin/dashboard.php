@@ -30,13 +30,13 @@ $allowedRoles = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_account'])) {
-    $name = trim($_POST['name'] ?? '');
+    $name = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $role = $_POST['role'] ?? 'Client';
 
     if ($name === '' || $email === '' || $password === '') {
-        $error = 'Please fill in name, email, and password.';
+        $error = 'Please fill in username, email, and password.';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Please enter a valid email address.';
     } elseif (strlen($password) < 6) {
@@ -462,9 +462,9 @@ $conn->close();
     <form method="POST" action="">
         <div class="create-account-grid">
             <div>
-                <label class="form-label-fh">Name</label>
-                <input type="text" name="name" class="form-control-fh" required
-                    value="<?php echo htmlspecialchars($_POST['name'] ?? ''); ?>">
+                <label class="form-label-fh">Username</label>
+                <input type="text" name="username" class="form-control-fh" required
+                    value="<?php echo htmlspecialchars($_POST['username'] ?? ''); ?>">
             </div>
             <div>
                 <label class="form-label-fh">Email</label>

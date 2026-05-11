@@ -256,7 +256,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
 
                     <?php elseif ($_SESSION['role'] === 'Freelancer'): ?>
                     <li class="nav-item">
-                        <a class="nav-link" href="../../views/escrow/wallet.php">
+                        <a class="nav-link" href="../proposals/my-proposals.php">
+                            <i class="bi bi-file-text me-1"></i>My Proposals
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../escrow/wallet.php">
                             <i class="bi bi-wallet2 me-1"></i>Wallet
                         </a>
                     </li>

@@ -51,6 +51,22 @@ class DisputeController
         return !empty($result) ? $result[0] : null;
     }
 
+    public function getActiveJobsForDispute($userId)
+    {
+        $db = new Database();
+        $db->openConnection();
+        $userId = (int)$userId;
+
+        $query = "SELECT j.id, j.title
+                  FROM jobs j
+                  WHERE j.status = 'In Progress'
+                    AND (j.client_id = $userId OR j.assigned_freelancer_id = $userId)
+                  ORDER BY j.created_at DESC";
+        $result = $db->select($query);
+        $db->closeConnection();
+        return $result ? $result : [];
+    }
+
     public function handleRaise()
     {
         $this->requireLogin();
@@ -61,19 +77,18 @@ class DisputeController
 
         $jobId = isset($_GET['job_id']) ? (int)$_GET['job_id'] : (int)($_POST['job_id'] ?? 0);
         $userId = (int)$_SESSION['user_id'];
-        $job = $this->getActiveJobForDispute($jobId, $userId);
+        $availableJobs = $this->getActiveJobsForDispute($userId);
+        $job = $jobId > 0 ? $this->getActiveJobForDispute($jobId, $userId) : null;
         $error = '';
 
-        if (empty($job)) {
-            header('Location: list.php');
-            exit();
-        }
-
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            if ($jobId <= 0 || empty($job)) {
+                $error = 'Please select an active job.';
+            }
             $reason = trim($_POST['reason'] ?? '');
-            if ($reason === '') {
+            if ($reason === '' && $error === '') {
                 $error = 'Please provide a reason for this dispute.';
-            } else {
+            } elseif ($error === '') {
                 $againstUserId = ($userId === (int)$job['client_id']) ? (int)$job['assigned_freelancer_id'] : (int)$job['client_id'];
 
                 if ($againstUserId <= 0) {
@@ -89,7 +104,7 @@ class DisputeController
             }
         }
 
-        return ['job' => $job, 'job_id' => $jobId, 'error' => $error];
+        return ['job' => $job, 'job_id' => $jobId, 'error' => $error, 'available_jobs' => $availableJobs];
     }
 
     public function canAccessDispute($dispute, $userId)
@@ -150,15 +165,38 @@ class DisputeController
                 header("Location: view.php?id=$disputeId");
                 exit();
             }
+
+            if (isset($_POST['submit_appeal']) && !$this->canModerate()) {
+                if ($dispute['status'] === 'Resolved' || $dispute['status'] === 'Dismissed') {
+                    $reason = trim($_POST['appeal_reason'] ?? '');
+                    if ($reason !== '') {
+                        $existingAppeals = $this->disputeModel->getAppealsByDispute($disputeId);
+                        $hasPending = false;
+                        foreach ($existingAppeals as $appeal) {
+                            if ($appeal['status'] === 'Pending' && (int)$appeal['requested_by_id'] === $userId) {
+                                $hasPending = true;
+                                break;
+                            }
+                        }
+                        if (!$hasPending) {
+                            $this->disputeModel->createAppeal($disputeId, $userId, $reason);
+                        }
+                    }
+                }
+                header("Location: view.php?id=$disputeId");
+                exit();
+            }
         }
 
         $messages = $this->disputeModel->getMessages($disputeId);
+        $appeals = $this->disputeModel->getAppealsByDispute($disputeId);
         $dispute = $this->disputeModel->getDisputeById($disputeId);
 
         return [
             'dispute' => $dispute,
             'messages' => $messages,
-            'is_moderator' => $this->canModerate()
+            'is_moderator' => $this->canModerate(),
+            'appeals' => $appeals
         ];
     }
 

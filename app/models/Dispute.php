@@ -149,4 +149,33 @@ class Dispute
         $this->db->closeConnection();
         return $result !== false;
     }
+
+    public function createAppeal($disputeId, $requestedById, $reason)
+    {
+        $this->db->openConnection();
+        $disputeId = (int)$disputeId;
+        $requestedById = (int)$requestedById;
+        $safeReason = $this->db->connection->real_escape_string($reason);
+
+        $query = "INSERT INTO dispute_appeals (dispute_id, requested_by_id, reason, status, created_at)
+                  VALUES ($disputeId, $requestedById, '$safeReason', 'Pending', NOW())";
+        $result = $this->db->insert($query);
+        $this->db->closeConnection();
+        return $result;
+    }
+
+    public function getAppealsByDispute($disputeId)
+    {
+        $this->db->openConnection();
+        $disputeId = (int)$disputeId;
+        $query = "SELECT da.*, u.name as requested_by_name, du.name as decided_by_name
+                  FROM dispute_appeals da
+                  LEFT JOIN users u ON da.requested_by_id = u.id
+                  LEFT JOIN users du ON da.decided_by_id = du.id
+                  WHERE da.dispute_id = $disputeId
+                  ORDER BY da.created_at DESC";
+        $result = $this->db->select($query);
+        $this->db->closeConnection();
+        return $result ? $result : [];
+    }
 }

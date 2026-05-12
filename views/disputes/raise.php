@@ -5,6 +5,7 @@ $data = $controller->handleRaise();
 $job = $data['job'];
 $jobId = $data['job_id'];
 $error = $data['error'];
+$availableJobs = $data['available_jobs'];
 require_once __DIR__ . '/../partials/header.php';
 ?>
 
@@ -51,7 +52,13 @@ require_once __DIR__ . '/../partials/header.php';
         <div class="col-lg-8">
             <div class="fh-card p-4 p-md-5">
                 <h2 class="fw-bold mb-1" style="color:#1a1a2e;">Raise Dispute</h2>
-                <p class="text-muted mb-4">Open a dispute for <strong><?= htmlspecialchars($job['title']) ?></strong>.</p>
+                <p class="text-muted mb-4">
+                    <?php if (!empty($job)): ?>
+                    Open a dispute for <strong><?= htmlspecialchars($job['title']) ?></strong>.
+                    <?php else: ?>
+                    Select one of your active jobs and submit a dispute reason.
+                    <?php endif; ?>
+                </p>
 
                 <?php if ($error !== ''): ?>
                 <div class="alert alert-danger mb-3"><?= htmlspecialchars($error) ?></div>
@@ -59,6 +66,17 @@ require_once __DIR__ . '/../partials/header.php';
 
                 <form method="POST">
                     <input type="hidden" name="job_id" value="<?= (int)$jobId ?>">
+                    <?php if (empty($job)): ?>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Active Job</label>
+                        <select class="form-select" name="job_id" required>
+                            <option value="">Select Job</option>
+                            <?php foreach ($availableJobs as $activeJob): ?>
+                            <option value="<?= (int)$activeJob['id'] ?>"><?= htmlspecialchars($activeJob['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Reason</label>
                         <textarea name="reason" class="form-control" rows="6" required

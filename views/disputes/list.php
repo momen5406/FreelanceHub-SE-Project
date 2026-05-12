@@ -65,6 +65,9 @@ require_once __DIR__ . '/../partials/header.php';
             <h2 class="fw-bold mb-1" style="color:#1a1a2e;">My Disputes</h2>
             <p class="text-muted mb-0">Track dispute status and continue dispute conversations.</p>
         </div>
+        <?php if (($_SESSION['role'] ?? '') === 'Client' || ($_SESSION['role'] ?? '') === 'Freelancer'): ?>
+        <a href="raise.php" class="btn btn-fh-primary">Create New Dispute</a>
+        <?php endif; ?>
     </div>
 
     <div class="fh-card p-0 overflow-hidden">

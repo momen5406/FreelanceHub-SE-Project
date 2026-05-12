@@ -5,6 +5,7 @@ $data = $controller->handleView();
 $dispute = $data['dispute'];
 $messages = $data['messages'];
 $isModerator = $data['is_moderator'];
+$appeals = $data['appeals'];
 $currentUserId = (int)$_SESSION['user_id'];
 require_once __DIR__ . '/../partials/header.php';
 ?>
@@ -149,6 +150,49 @@ if ($dispute['status'] === 'Under Review') {
         <h6 class="fw-bold mb-2" style="color:#1a1a2e;">Resolution</h6>
         <div class="text-muted mb-2"><?= nl2br(htmlspecialchars($dispute['resolution_notes'] ?? 'No notes provided.')) ?></div>
         <small class="text-muted">Resolved at: <?= $dispute['resolved_at'] ? date('M d, Y h:i A', strtotime($dispute['resolved_at'])) : '-' ?></small>
+    </div>
+
+    <?php if (!$isModerator): ?>
+    <?php
+        $hasPendingAppeal = false;
+        foreach ($appeals as $appealCheck) {
+            if ($appealCheck['status'] === 'Pending' && (int)$appealCheck['requested_by_id'] === $currentUserId) {
+                $hasPendingAppeal = true;
+                break;
+            }
+        }
+        ?>
+    <div class="fh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3" style="color:#1a1a2e;">Appeal Decision</h6>
+        <?php if ($hasPendingAppeal): ?>
+        <div class="text-muted">You already have a pending appeal for this dispute.</div>
+        <?php else: ?>
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Appeal Reason</label>
+                <textarea class="form-control" name="appeal_reason" rows="4" required
+                    placeholder="Explain why this decision should be reviewed again."></textarea>
+            </div>
+            <button type="submit" name="submit_appeal" class="btn btn-fh-primary">Submit Appeal</button>
+        </form>
+        <?php endif; ?>
+    </div>
+    <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if (!empty($appeals)): ?>
+    <div class="fh-card p-4 mb-4">
+        <h6 class="fw-bold mb-3" style="color:#1a1a2e;">Appeals</h6>
+        <?php foreach ($appeals as $appeal): ?>
+        <div class="mb-3 pb-3 border-bottom">
+            <div class="fw-semibold"><?= htmlspecialchars($appeal['requested_by_name'] ?? 'User') ?> · <?= htmlspecialchars($appeal['status']) ?></div>
+            <div class="text-muted small mb-2"><?= date('M d, Y h:i A', strtotime($appeal['created_at'])) ?></div>
+            <div class="text-muted mb-1"><?= nl2br(htmlspecialchars($appeal['reason'])) ?></div>
+            <?php if (!empty($appeal['decision_notes'])): ?>
+            <div><strong>Decision Notes:</strong> <?= nl2br(htmlspecialchars($appeal['decision_notes'])) ?></div>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
     </div>
     <?php endif; ?>
 

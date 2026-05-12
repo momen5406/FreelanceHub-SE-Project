@@ -243,6 +243,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="../../views/disputes/list.php">
+                            <i class="bi bi-shield-exclamation me-1"></i>Disputes
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="../../views/client/pending-approvals.php">
                             <i class="bi bi-clock-history me-1"></i>Pending Approvals
                         </a>
@@ -265,8 +270,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="../../views/disputes/list.php">
+                            <i class="bi bi-shield-exclamation me-1"></i>Disputes
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="../freelancer/wallet.php">
                             <i class="bi bi-wallet2 me-1"></i>Wallet
+                        </a>
+                    </li>
+
+                    <?php elseif ($_SESSION['role'] === 'Dispute Mediator'): ?>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../../views/disputes/mediator-dashboard.php">
+                            <i class="bi bi-shield-check me-1"></i>Dispute Dashboard
                         </a>
                     </li>
 
@@ -274,6 +291,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
                     <li class="nav-item">
                         <a class="btn btn-fh-admin" href="../../views/admin/dashboard.php">
                             <i class="bi bi-shield-check me-1"></i>Admin Panel
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-fh-admin" href="../../views/disputes/mediator-dashboard.php">
+                            <i class="bi bi-shield-exclamation me-1"></i>Dispute Dashboard
                         </a>
                     </li>
                     <li class="nav-item">

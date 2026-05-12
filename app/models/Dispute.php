@@ -7,36 +7,146 @@ class Dispute
 
     public function __construct()
     {
-        $database = new Database();
-        $this->db = $database->connect();
+        $this->db = new Database();
     }
 
-    public function getRecentDisputes($limit = 5)
+    public function raiseDispute($reason, $jobId, $raisedById, $againstUserId)
     {
-        try {
-            $stmt = $this->db->prepare("
-                SELECT 
-                    d.id,
-                    d.reason,
-                    d.status,
-                    d.created_at,
-                    j.title as job_title,
-                    u1.name as raised_by_name,
-                    u2.name as against_name
-                FROM Dispute d
-                LEFT JOIN Jobs j ON d.job_id = j.id
-                LEFT JOIN Users u1 ON d.raised_by_id = u1.id
-                LEFT JOIN Users u2 ON d.against_user_id = u2.id
-                ORDER BY d.created_at DESC
-                LIMIT :limit
-            ");
-            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-            $stmt->execute();
+        $this->db->openConnection();
+        $safeReason = $this->db->connection->real_escape_string($reason);
+        $jobId = (int)$jobId;
+        $raisedById = (int)$raisedById;
+        $againstUserId = (int)$againstUserId;
 
-            return $stmt->fetchAll(PDO::FETCH_ASSOC);
-        } catch (PDOException $e) {
-            error_log("Error in getRecentDisputes: " . $e->getMessage());
-            return [];
+        $query = "INSERT INTO dispute (reason, status, job_id, raised_by_id, against_user_id, created_at)
+                  VALUES ('$safeReason', 'Open', $jobId, $raisedById, $againstUserId, NOW())";
+        $result = $this->db->insert($query);
+        $this->db->closeConnection();
+        return $result;
+    }
+
+    public function getDisputeById($disputeId)
+    {
+        $this->db->openConnection();
+        $disputeId = (int)$disputeId;
+
+        $query = "SELECT d.*, j.title as job_title,
+                         rb.name as raised_by_name,
+                         au.name as against_user_name,
+                         j.client_id,
+                         j.assigned_freelancer_id
+                  FROM dispute d
+                  LEFT JOIN jobs j ON d.job_id = j.id
+                  LEFT JOIN users rb ON d.raised_by_id = rb.id
+                  LEFT JOIN users au ON d.against_user_id = au.id
+                  WHERE d.id = $disputeId
+                  LIMIT 1";
+        $result = $this->db->select($query);
+        $this->db->closeConnection();
+        return !empty($result) ? $result[0] : null;
+    }
+
+    public function getDisputesByUser($userId)
+    {
+        $this->db->openConnection();
+        $userId = (int)$userId;
+
+        $query = "SELECT d.*, j.title as job_title,
+                         rb.name as raised_by_name,
+                         au.name as against_user_name
+                  FROM dispute d
+                  LEFT JOIN jobs j ON d.job_id = j.id
+                  LEFT JOIN users rb ON d.raised_by_id = rb.id
+                  LEFT JOIN users au ON d.against_user_id = au.id
+                  WHERE d.raised_by_id = $userId OR d.against_user_id = $userId
+                  ORDER BY
+                      CASE d.status
+                          WHEN 'Open' THEN 1
+                          WHEN 'Under Review' THEN 2
+                          WHEN 'Resolved' THEN 3
+                          WHEN 'Dismissed' THEN 4
+                          ELSE 5
+                      END,
+                      d.created_at DESC";
+        $result = $this->db->select($query);
+        $this->db->closeConnection();
+        return $result ? $result : [];
+    }
+
+    public function getAllDisputes()
+    {
+        $this->db->openConnection();
+        $query = "SELECT d.*, j.title as job_title,
+                         rb.name as raised_by_name,
+                         au.name as against_user_name
+                  FROM dispute d
+                  LEFT JOIN jobs j ON d.job_id = j.id
+                  LEFT JOIN users rb ON d.raised_by_id = rb.id
+                  LEFT JOIN users au ON d.against_user_id = au.id
+                  ORDER BY
+                      CASE d.status
+                          WHEN 'Open' THEN 1
+                          WHEN 'Under Review' THEN 2
+                          WHEN 'Resolved' THEN 3
+                          WHEN 'Dismissed' THEN 4
+                          ELSE 5
+                      END,
+                      d.created_at DESC";
+        $result = $this->db->select($query);
+        $this->db->closeConnection();
+        return $result ? $result : [];
+    }
+
+    public function addMessage($disputeId, $userId, $message)
+    {
+        $this->db->openConnection();
+        $disputeId = (int)$disputeId;
+        $userId = (int)$userId;
+        $safeMessage = $this->db->connection->real_escape_string($message);
+
+        $query = "INSERT INTO dispute_messages (dispute_id, user_id, message, created_at)
+                  VALUES ($disputeId, $userId, '$safeMessage', NOW())";
+        $result = $this->db->insert($query);
+        $this->db->closeConnection();
+        return $result;
+    }
+
+    public function getMessages($disputeId)
+    {
+        $this->db->openConnection();
+        $disputeId = (int)$disputeId;
+
+        $query = "SELECT dm.*, u.name as sender_name
+                  FROM dispute_messages dm
+                  LEFT JOIN users u ON dm.user_id = u.id
+                  WHERE dm.dispute_id = $disputeId
+                  ORDER BY dm.created_at ASC";
+        $result = $this->db->select($query);
+        $this->db->closeConnection();
+        return $result ? $result : [];
+    }
+
+    public function updateStatus($disputeId, $status, $resolutionNotes = '')
+    {
+        $this->db->openConnection();
+        $disputeId = (int)$disputeId;
+        $safeStatus = $this->db->connection->real_escape_string($status);
+        $safeNotes = $this->db->connection->real_escape_string($resolutionNotes);
+
+        if ($safeStatus === 'Resolved' || $safeStatus === 'Dismissed') {
+            $query = "UPDATE dispute
+                      SET status = '$safeStatus',
+                          resolution_notes = '$safeNotes',
+                          resolved_at = NOW()
+                      WHERE id = $disputeId";
+        } else {
+            $query = "UPDATE dispute
+                      SET status = '$safeStatus'
+                      WHERE id = $disputeId";
         }
+
+        $result = $this->db->update($query);
+        $this->db->closeConnection();
+        return $result !== false;
     }
 }

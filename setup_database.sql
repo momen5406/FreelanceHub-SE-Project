@@ -942,6 +942,96 @@ CREATE TABLE `dispute_messages` (
     FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
 
+CREATE TABLE `dispute_assignments` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dispute_id` int(11) NOT NULL,
+    `admin_id` int(11) NOT NULL,
+    `assigned_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `unassigned_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_dispute` (`dispute_id`),
+    KEY `admin_id` (`admin_id`),
+    FOREIGN KEY (`dispute_id`) REFERENCES `dispute` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`admin_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE `dispute_safe_room_messages` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dispute_id` int(11) NOT NULL,
+    `user_id` int(11) NOT NULL,
+    `message` text NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `dispute_id` (`dispute_id`),
+    KEY `user_id` (`user_id`),
+    FOREIGN KEY (`dispute_id`) REFERENCES `dispute` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE `dispute_evidence_files` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dispute_id` int(11) NOT NULL,
+    `created_by_id` int(11) NOT NULL,
+    `title` varchar(190) NOT NULL,
+    `content_html` longtext NOT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    KEY `dispute_id` (`dispute_id`),
+    KEY `created_by_id` (`created_by_id`),
+    FOREIGN KEY (`dispute_id`) REFERENCES `dispute` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE `dispute_verdicts` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dispute_id` int(11) NOT NULL,
+    `decided_by_id` int(11) NOT NULL,
+    `freelancer_percentage` int(11) NOT NULL,
+    `client_percentage` int(11) NOT NULL,
+    `verdict_notes` text DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uniq_dispute_verdict` (`dispute_id`),
+    KEY `decided_by_id` (`decided_by_id`),
+    FOREIGN KEY (`dispute_id`) REFERENCES `dispute` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`decided_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE `dispute_appeals` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `dispute_id` int(11) NOT NULL,
+    `requested_by_id` int(11) NOT NULL,
+    `reason` text NOT NULL,
+    `status` enum('Pending','Approved','Rejected') DEFAULT 'Pending',
+    `decided_by_id` int(11) DEFAULT NULL,
+    `decision_notes` text DEFAULT NULL,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `decided_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `dispute_id` (`dispute_id`),
+    KEY `requested_by_id` (`requested_by_id`),
+    KEY `decided_by_id` (`decided_by_id`),
+    FOREIGN KEY (`dispute_id`) REFERENCES `dispute` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`requested_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`decided_by_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
+CREATE TABLE `user_sanctions` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `user_id` int(11) NOT NULL,
+    `level` enum('Warning','Limited Access','Permanent Ban') NOT NULL,
+    `reason` text NOT NULL,
+    `created_by_id` int(11) NOT NULL,
+    `is_active` tinyint(1) DEFAULT 1,
+    `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+    `expires_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`),
+    KEY `user_id` (`user_id`),
+    KEY `created_by_id` (`created_by_id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`created_by_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4 COLLATE = utf8mb4_general_ci;
+
 CREATE TABLE `notifications` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `message` text NOT NULL,

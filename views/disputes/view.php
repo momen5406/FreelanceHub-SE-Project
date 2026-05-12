@@ -186,6 +186,9 @@ if ($dispute['status'] === 'Under Review') {
     <?php if ($isModerator): ?>
     <div class="fh-card p-4 mb-4">
         <h6 class="fw-bold mb-3" style="color:#1a1a2e;">Mediator Action Panel</h6>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <a class="btn btn-sm btn-fh-outline" href="dispute-file.php?id=<?= (int)$dispute['id'] ?>">Evidence Package</a>
+        </div>
         <form method="POST">
             <div class="mb-3">
                 <label class="form-label fw-semibold">Status</label>
